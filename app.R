@@ -6,7 +6,7 @@ library(readr)
 library(shinythemes)  
 library(shiny)       # will load fluidPage
 cleaned_survey_data <- read_csv("Riskwise_data/cleaned_survey_data.csv")
-View(cleaned_survey_data)
+#View(cleaned_survey_data)
 
 
 # Use select() to get all desired columns in a single, clean command
