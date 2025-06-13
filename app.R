@@ -76,6 +76,9 @@ plot_vars <- c("Risk Attitude" = "risk_attitude", "Decision Ranking" = "decision
 # =================================================================
 # 3. Define the User Interface (UI)
 # =================================================================
+# =================================================================
+# 3. Define the User Interface (UI)
+# =================================================================
 ui <- fluidPage(
   theme = shinytheme("cerulean"),
   titlePanel("Farm Decision-Making Dashboard"),
@@ -83,35 +86,71 @@ ui <- fluidPage(
                choices = names(plot_vars), selected = "Risk Attitude", inline = TRUE),
   hr(),
   fluidRow(
-    column(3, h3("Filters", align = "center"), wellPanel(h4("Population 1 / Peers", align="center"), selectInput("region_filter1", "Region:", choices = all_regions), selectInput("group_filter1", "Group:", choices = all_groups), conditionalPanel(condition = "input.variable_selector != 'Decision Ranking' && input.variable_selector != 'Review Process'", selectInput("decision_filter1", "Specific Decision:", choices = decision_choices)))),
-    column(6, uiOutput("summary_output_ui"), plotOutput("main_plot", height = "500px"), div(align = "center", radioButtons("compare_mode", "View Mode:", choices = c("Single Population" = "single", "Compare two populations" = "compare_two", "Compare me to my peers" = "compare_me"), selected = "single", inline = TRUE))),
+    # --- LEFT COLUMN: Filters (Always Visible) ---
     column(3, 
-           # --- UI for "Compare Me" mode with User ID and their response ---
-           conditionalPanel(
-             condition = "input.compare_mode == 'compare_me'", 
-             h3("My Response", align = "center"), 
-             wellPanel(
-               selectInput("client_selector", "Select Your ID:", choices = client_choices),
-               hr(),
-               # This will display the user's specific response text
-               uiOutput("user_response_text_ui") 
-             )
-           ),
-           # --- UI for "Compare Two" mode ---
-           conditionalPanel(
-             condition = "input.compare_mode == 'compare_two'", 
-             h3("Filters", align = "center"), 
-             wellPanel(
-               h4("Population 2", align="center"), 
-               selectInput("region_filter2", "Region:", choices = all_regions, selected = all_regions[2]), 
-               selectInput("group_filter2", "Group:", choices = all_groups), 
-               conditionalPanel(condition = "input.variable_selector != 'Decision Ranking' && input.variable_selector != 'Review Process'", 
-                                selectInput("decision_filter2", "Specific Decision:", choices = decision_choices))
+           h3("Filters", align = "center"), 
+           wellPanel(
+             h4("Population 1 / Peers", align="center"), 
+             selectInput("region_filter1", "Region:", choices = all_regions), 
+             selectInput("group_filter1", "Group:", choices = all_groups), 
+             # This specific decision filter is also conditional
+             conditionalPanel(
+               condition = "!['Decision Ranking', 'Review Process'].includes(input.variable_selector)", 
+               selectInput("decision_filter1", "Specific Decision:", choices = decision_choices)
              )
            )
+    ),
+    
+    # --- MIDDLE COLUMN: Main Content ---
+    column(6, 
+           uiOutput("summary_output_ui"), 
+           plotOutput("main_plot", height = "500px"), 
+           div(align = "center",
+               # *** FIX: This entire block is now conditional ***
+               conditionalPanel(
+                 condition = "input.variable_selector != 'Decision Ranking'",
+                 radioButtons("compare_mode", "View Mode:", 
+                              choices = c("Single Population" = "single", 
+                                          "Compare two populations" = "compare_two", 
+                                          "Compare me to my peers" = "compare_me"), 
+                              selected = "single", inline = TRUE)
+               )
+           )
+    ),
+    
+    # --- RIGHT COLUMN: Conditional Filters / User Selection ---
+    # *** FIX: This entire column is now conditional ***
+    conditionalPanel(
+      condition = "input.variable_selector != 'Decision Ranking'",
+      column(3, 
+             conditionalPanel(
+               condition = "input.compare_mode == 'compare_me'", 
+               h3("My Response", align = "center"), 
+               wellPanel(
+                 selectInput("client_selector", "Select Your ID:", choices = client_choices),
+                 hr(),
+                 uiOutput("user_response_text_ui")
+               )
+             ),
+             conditionalPanel(
+               condition = "input.compare_mode == 'compare_two'", 
+               h3("Filters", align = "center"), 
+               wellPanel(
+                 h4("Population 2", align="center"), 
+                 selectInput("region_filter2", "Region:", choices = all_regions, selected = all_regions[2]), 
+                 selectInput("group_filter2", "Group:", choices = all_groups), 
+                 conditionalPanel(
+                   condition = "input.variable_selector != 'Review Process'",
+                   selectInput("decision_filter2", "Specific Decision:", choices = decision_choices)
+                 )
+               )
+             )
+      )
     )
   )
 )
+
+
 
 
 # =================================================================
