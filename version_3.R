@@ -48,6 +48,9 @@ plot_vars <- c("Risk Attitude" = "risk_attitude", "Decision Ranking" = "decision
 # =================================================================
 # 3. Define the User Interface (UI)
 # =================================================================
+# =================================================================
+# 3. Define the User Interface (UI)
+# =================================================================
 ui <- fluidPage(
   theme = shinytheme("cerulean"),
   titlePanel("Farm Decision-Making Dashboard"),
@@ -57,23 +60,46 @@ ui <- fluidPage(
                choices = names(plot_vars), selected = "Risk Attitude", inline = TRUE),
   hr(),
   
+  # *** NEW LAYOUT: Use fluidRow and columns for a 3-panel design ***
   fluidRow(
-    # --- Column for Filters ---
-    column(4,
+    
+    # --- LEFT COLUMN: Filters for Population 1 ---
+    column(3,
+           h3("Filters", align = "center"),
            wellPanel(
-             h3("Population 1 Filters"),
+             h4("Population 1", align="center"),
              selectInput("region_filter1", "Region:", choices = all_regions),
              selectInput("group_filter1", "Group:", choices = all_groups),
+             # This specific decision filter only applies to certain plots
              conditionalPanel(
                condition = "input.variable_selector != 'Decision Ranking'",
                selectInput("decision_filter1", "Specific Decision:", choices = decision_choices)
              )
-           ),
-           # --- Second set of filters, appears only in compare mode ---
+           )
+    ),
+    
+    # --- MIDDLE COLUMN: Main Content (Plot and Table) ---
+    column(6,
+           # The summary table or bar will appear here
+           uiOutput("summary_output_ui"),
+           
+           # The main plot
+           plotOutput("main_plot", height = "500px"),
+           
+           # Checkbox to toggle comparison mode, centered
+           div(align = "center",
+               checkboxInput("compare_mode", "Compare two populations", value = FALSE)
+           )
+    ),
+    
+    # --- RIGHT COLUMN: Filters for Population 2 (Conditional) ---
+    column(3,
+           # This entire column only appears when compare_mode is checked
            conditionalPanel(
              condition = "input.compare_mode == true",
+             h3("Filters", align = "center"),
              wellPanel(
-               h3("Population 2 Filters"),
+               h4("Population 2", align="center"),
                selectInput("region_filter2", "Region:", choices = all_regions, selected = all_regions[2]),
                selectInput("group_filter2", "Group:", choices = all_groups),
                conditionalPanel(
@@ -82,18 +108,6 @@ ui <- fluidPage(
                )
              )
            )
-    ),
-    
-    # --- Column for Plots and Tables ---
-    column(8,
-           # The summary table or bar will appear here
-           uiOutput("summary_output_ui"),
-           
-           # The main plot
-           plotOutput("main_plot", height = "500px"),
-           
-           # Checkbox to toggle comparison mode
-           checkboxInput("compare_mode", "Compare two populations", value = FALSE)
     )
   )
 )

@@ -136,9 +136,9 @@ ui <- fluidPage(
 # 4. Define the Server Logic
 # =================================================================
 server <- function(input, output) {
-
+  
   difficulty_colors <- c("Not Difficult" = "#2ca02c", "Somewhat Difficult" = "#ffbb78", "Very Difficult" = "#d62728")
-
+  
   # --- Reactive Data Filtering ---
   filtered_data1 <- reactive({
     data <- if (input$variable_selector == "Decision Ranking") decision_ranking_long else risk_attitude_df
@@ -149,7 +149,7 @@ server <- function(input, output) {
     }
     return(data)
   })
-
+  
   filtered_data2 <- reactive({
     req(input$compare_mode == "compare_two")
     data <- if (input$variable_selector == "Decision Ranking") decision_ranking_long else risk_attitude_df
@@ -165,14 +165,14 @@ server <- function(input, output) {
     req(input$compare_mode == "compare_me", input$client_selector)
     risk_attitude_df %>% filter(client_id == input$client_selector)
   })
-
+  
   # --- Dynamic Summary UI ---
   output$summary_output_ui <- renderUI({
     req(input$variable_selector == "Risk Attitude")
     if (input$compare_mode == "compare_two") tableOutput("comparison_summary_table")
     else if (input$compare_mode == "single") uiOutput("single_summary_bar")
   })
-
+  
   output$single_summary_bar <- renderUI({
     data <- filtered_data1()
     risk_data <- data %>% filter(!is.na(risk_attitude))
@@ -186,14 +186,14 @@ server <- function(input, output) {
     })
     fluidRow(column(1), summary_cols)
   })
-
+  
   output$comparison_summary_table <- renderTable({
-      process_summary <- function(df, pop_name) {df %>% filter(!is.na(risk_attitude)) %>% mutate(Category = case_when(risk_attitude <= 1 ~ "Very Risk Avoidant", risk_attitude <= 4 ~ "Risk Avoidant", risk_attitude == 5 ~ "Neutral", risk_attitude <= 8 ~ "Risk Tolerant", TRUE ~ "Very Risk Tolerant")) %>% count(Category) %>% mutate(!!pop_name := paste0(round(n / sum(n) * 100), "%")) %>% select(Category, !!pop_name)}
-      summary1 <- process_summary(filtered_data1(), "Peer Group")
-      summary2 <- process_summary(filtered_data2(), "Comparison Group")
-      full_join(summary1, summary2, by = "Category") %>% replace(is.na(.), "0%")
+    process_summary <- function(df, pop_name) {df %>% filter(!is.na(risk_attitude)) %>% mutate(Category = case_when(risk_attitude <= 1 ~ "Very Risk Avoidant", risk_attitude <= 4 ~ "Risk Avoidant", risk_attitude == 5 ~ "Neutral", risk_attitude <= 8 ~ "Risk Tolerant", TRUE ~ "Very Risk Tolerant")) %>% count(Category) %>% mutate(!!pop_name := paste0(round(n / sum(n) * 100), "%")) %>% select(Category, !!pop_name)}
+    summary1 <- process_summary(filtered_data1(), "Peer Group")
+    summary2 <- process_summary(filtered_data2(), "Comparison Group")
+    full_join(summary1, summary2, by = "Category") %>% replace(is.na(.), "0%")
   }, striped = TRUE, bordered = TRUE, align = 'c')
-
+  
   # --- Main Plot Rendering Logic ---
   output$main_plot <- renderPlot({
     
@@ -201,63 +201,63 @@ server <- function(input, output) {
     
     # --- A. COMPARE TWO POPULATIONS PLOT ---
     if (input$compare_mode == "compare_two") {
-        process_plot_data <- function(df, pop_name, var) {df %>% filter(!is.na(.data[[var]])) %>% count(.data[[var]], name = "n") %>% mutate(percentage = n / sum(n)) %>% rename(value = 1) %>% mutate(population = pop_name)}
-        combined_data <- bind_rows(process_plot_data(filtered_data1(), "Population 1", selected_var_name), process_plot_data(filtered_data2(), "Population 2", selected_var_name))
-        if(nrow(combined_data)==0) return(ggplot()+annotate("text",x=0.5,y=0.5,label="No data.",size=6)+theme_void())
-        ggplot(combined_data, aes(x=value, y=percentage, color=population)) + geom_line(size=1.2) + geom_point(size=4) + scale_x_continuous(limits=c(0,10), breaks=seq(0,10,2)) + scale_y_continuous(labels=scales::percent) + labs(title=paste("Comparison of", input$variable_selector), x="Score (0-10)", y="Percentage of Respondents", color="Population") + theme_minimal(base_size=15) + theme(plot.title=element_text(hjust=0.5, face="bold"), legend.position="bottom")
-
-    # --- B. COMPARE ME TO MY PEERS PLOT ---
-    } else if (input$compare_mode == "compare_me") {
-        
-        req(input$variable_selector != "Decision Ranking") # This mode is not for the ranking chart
-
-        peers_data <- filtered_data1()
-        user_data <- selected_user_data()
-        user_value <- user_data[[selected_var_name]]
-        
-        peers_plot_data <- peers_data %>%
-            filter(!is.na(.data[[selected_var_name]])) %>%
-            count(.data[[selected_var_name]], name = "count") %>%
-            rename(value = 1)
-
-        if (nrow(peers_plot_data) == 0) {
-            return(ggplot() + annotate("text", x=0.5, y=0.5, label="No data for selected peer group.", size=6) + theme_void())
-        }
-        
-        p <- ggplot(peers_plot_data, aes(x = value, y = count)) +
-            geom_line(color = "#006699", size = 1.2) +
-            geom_point(color = "#006699", size = 4) +
-            scale_x_continuous(limits = c(-0.5, 10.5), breaks = seq(0, 10, 2), expand = c(0,0)) +
-            scale_y_continuous(expand = expansion(mult = c(0, .1))) +
-            labs(title = paste("Your Response vs. Peer Distribution for", input$variable_selector),
-                 x = "Score (0-10)", y = "Number of Respondents (Peers)") +
-            theme_minimal(base_size = 15) +
-            theme(plot.title = element_text(hjust = 0.5, face = "bold"))
-        
-        # ... (the code for the plot 'p' before this block remains the same) ...
-        
-        if (length(user_value) > 0 && !is.na(user_value)) {
-          p <- p + 
-            # This part for the blue bar is unchanged
-            geom_col(data = data.frame(value = user_value, count = max(peers_plot_data$count) * 0.5),
-                     aes(x = value, y = count), fill = "#006699", alpha = 0.8, width = 0.4) +
-            
-            # *** THIS IS THE UPDATED PART FOR THE TEXT ***
-            geom_text(data = data.frame(value = user_value, 
-                                        # Adjust y position to be in the middle of the bar
-                                        count = max(peers_plot_data$count) * 0.25), 
-                      aes(label = "My Response"),  # Removed the \n
-                      color = "white", 
-                      fontface = "bold", 
-                      size = 5, 
-                      angle = 90,  # Rotate the text 90 degrees
-                      hjust = 0.5) # Center the text horizontally
-        }
-        
-        p # Display the final plot
+      process_plot_data <- function(df, pop_name, var) {df %>% filter(!is.na(.data[[var]])) %>% count(.data[[var]], name = "n") %>% mutate(percentage = n / sum(n)) %>% rename(value = 1) %>% mutate(population = pop_name)}
+      combined_data <- bind_rows(process_plot_data(filtered_data1(), "Population 1", selected_var_name), process_plot_data(filtered_data2(), "Population 2", selected_var_name))
+      if(nrow(combined_data)==0) return(ggplot()+annotate("text",x=0.5,y=0.5,label="No data.",size=6)+theme_void())
+      ggplot(combined_data, aes(x=value, y=percentage, color=population)) + geom_line(size=1.2) + geom_point(size=4) + scale_x_continuous(limits=c(0,10), breaks=seq(0,10,2)) + scale_y_continuous(labels=scales::percent) + labs(title=paste("Comparison of", input$variable_selector), x="Score (0-10)", y="Percentage of Respondents", color="Population") + theme_minimal(base_size=15) + theme(plot.title=element_text(hjust=0.5, face="bold"), legend.position="bottom")
       
-
-    # --- C. SINGLE POPULATION PLOT ---
+      # --- B. COMPARE ME TO MY PEERS PLOT ---
+    } else if (input$compare_mode == "compare_me") {
+      
+      req(input$variable_selector != "Decision Ranking") # This mode is not for the ranking chart
+      
+      peers_data <- filtered_data1()
+      user_data <- selected_user_data()
+      user_value <- user_data[[selected_var_name]]
+      
+      peers_plot_data <- peers_data %>%
+        filter(!is.na(.data[[selected_var_name]])) %>%
+        count(.data[[selected_var_name]], name = "count") %>%
+        rename(value = 1)
+      
+      if (nrow(peers_plot_data) == 0) {
+        return(ggplot() + annotate("text", x=0.5, y=0.5, label="No data for selected peer group.", size=6) + theme_void())
+      }
+      
+      p <- ggplot(peers_plot_data, aes(x = value, y = count)) +
+        geom_line(color = "#006699", size = 1.2) +
+        geom_point(color = "#006699", size = 4) +
+        scale_x_continuous(limits = c(-0.5, 10.5), breaks = seq(0, 10, 2), expand = c(0,0)) +
+        scale_y_continuous(expand = expansion(mult = c(0, .1))) +
+        labs(title = paste("Your Response vs. Peer Distribution for", input$variable_selector),
+             x = "Score (0-10)", y = "Number of Respondents (Peers)") +
+        theme_minimal(base_size = 15) +
+        theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+      
+      # ... (the code for the plot 'p' before this block remains the same) ...
+      
+      if (length(user_value) > 0 && !is.na(user_value)) {
+        p <- p + 
+          # This part for the blue bar is unchanged
+          geom_col(data = data.frame(value = user_value, count = max(peers_plot_data$count) * 0.5),
+                   aes(x = value, y = count), fill = "#006699", alpha = 0.8, width = 0.4) +
+          
+          # *** THIS IS THE UPDATED PART FOR THE TEXT ***
+          geom_text(data = data.frame(value = user_value, 
+                                      # Adjust y position to be in the middle of the bar
+                                      count = max(peers_plot_data$count) * 0.25), 
+                    aes(label = "My Response"),  # Removed the \n
+                    color = "white", 
+                    fontface = "bold", 
+                    size = 5, 
+                    angle = 90,  # Rotate the text 90 degrees
+                    hjust = 0.5) # Center the text horizontally
+      }
+      
+      p # Display the final plot
+      
+      
+      # --- C. SINGLE POPULATION PLOT ---
     } else {
       data <- filtered_data1()
       if (input$variable_selector == "Decision Ranking") {
