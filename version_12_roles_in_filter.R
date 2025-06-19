@@ -38,8 +38,6 @@ roles_to_join <- client_data_with_roles %>%
 survey_data <- survey_data %>%
   left_join(roles_to_join, by = "client_id")
 
-
-# a bit cleaning of duplicates
 #check 
 rows_after_join <- nrow(survey_data)
 message(paste("Number of rows after joining with roles data:", rows_after_join))
@@ -48,8 +46,7 @@ message(paste("Number of rows after joining with roles data:", rows_after_join))
 survey_data <- survey_data %>%
   distinct(client_id, .keep_all = TRUE)
 
-#nrow(survey_data)  # after removing duplicates
-
+nrow(survey_data)  # after removing duplicates
 
 # --- A: Prepare "Decision Ranking" Data ---
 decision_ranking_long <- survey_data %>%
@@ -65,7 +62,7 @@ decision_ranking_long <- survey_data %>%
     decision_name = str_replace(decision_name, "Marketing Grain Sales And Contracts", "Marketing Strategies (Grain sales and contracts)")
   ) %>%
   filter(!is.na(difficulty_level), difficulty_level != "Not Relevant") %>%
-  mutate(difficulty_level = factor(difficulty_level, levels = c("Not Difficult", "Somewhat Difficult", "Very Difficult")))
+  mutate(difficulty_level = factor(difficulty_level, levels = c("Very Difficult", "Somewhat Difficult", "Not Difficult")))
 
 # --- B: Prepare "Risk Attitude" and other data ---
 risk_attitude_df <- survey_data %>%
@@ -90,6 +87,7 @@ risk_attitude_df <- survey_data %>%
   ) %>%
   mutate(across(c(intuition_vs_data, advisor_balance, production_vs_profit, comfort_with_process, risk_attitude), ~replace_na(., 0)))
 
+
 # --- Count and Replace NA values in risk_attitude_df ---
 numeric_score_columns <- c(
   "intuition_vs_data", "advisor_balance", "production_vs_profit",
@@ -97,7 +95,6 @@ numeric_score_columns <- c(
 )
 risk_attitude_df <- risk_attitude_df %>%
   mutate(across(all_of(numeric_score_columns), ~replace_na(., 0)))
-
 
 
 # --- C. Prepare "Review Process" Data ---
@@ -164,9 +161,9 @@ ui <- fluidPage(
            wellPanel(
              uiOutput("pop1_filter_header"),
              # NEW: Added Role Filter for Population 1
+             selectInput("role_filter1", "Role:", choices = all_roles),
              selectInput("region_filter1", "Region:", choices = all_regions),
              selectInput("group_filter1", "Group:", choices = all_groups),
-             selectInput("role_filter1", "Role:", choices = all_roles),
              conditionalPanel(
                condition = "!['Decision Ranking', 'Review Process'].includes(input.variable_selector)",
                selectInput("decision_filter1", "Specific Decision:", choices = decision_choices)
@@ -187,12 +184,12 @@ ui <- fluidPage(
              ),
              conditionalPanel(
                condition = "input.compare_mode == 'compare_two'",
+               uiOutput("pop2_filter_header"),
                wellPanel(
-                 uiOutput("pop2_filter_header"),
                  # NEW: Added Role Filter for Population 2
+                 selectInput("role_filter2", "Role:", choices = all_roles),
                  selectInput("region_filter2", "Region:", choices = all_regions, selected = all_regions[1]),
                  selectInput("group_filter2", "Group:", choices = all_groups),
-                 selectInput("role_filter2", "Role:", choices = all_roles),
                  conditionalPanel(
                    condition = "input.variable_selector != 'Review Process'",
                    selectInput("decision_filter2", "Specific Decision:", choices = decision_choices)
@@ -301,7 +298,7 @@ server <- function(input, output, session) {
   })
   
   output$pop1_filter_header <- renderUI({
-    h4(paste0("Population 1 Filters (n=", plot_population_sizes()$pop1_size, ")"), align="center")
+    h4(paste0("Population 1 / Peers Filters (n=", plot_population_sizes()$pop1_size, ")"), align="center")
   })
   
   output$pop2_filter_header <- renderUI({
@@ -337,6 +334,7 @@ server <- function(input, output, session) {
   })
   
   output$comparison_summary_table <- renderTable({
+    category_order_vector <- c("Very Risk Avoidant", "Risk Avoidant", "Neutral", "Risk Tolerant", "Very Risk Tolerant")
     get_population_percentages <- function(df, pop_label) {
       category_order_vector <- c("Very Risk Avoidant", "Risk Avoidant", "Neutral", "Risk Tolerant", "Very Risk Tolerant")
       

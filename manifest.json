@@ -2575,10 +2575,10 @@
   },
   "files": {
     ".RData": {
-      "checksum": "54c7d32149dd21175c8a64d6166baa2c"
+      "checksum": "6b9dc53e06d8b7b0574510761b49ca44"
     },
     "app.R": {
-      "checksum": "a73b212b827a8beba65757481ff29577"
+      "checksum": "83845235eb2a8dd96f25e453a007e99c"
     },
     "creating_data_frame.R": {
       "checksum": "b5ad64356b8b9048d8c176e67375a9c8"
@@ -2595,8 +2595,23 @@
     "Riskwise_data/cleaned_survey_data.csv": {
       "checksum": "3098f6b0a32acc3c5b26b7eac51299bd"
     },
+    "Riskwise_data/Client_ID_A.csv": {
+      "checksum": "ff0ef7e68a6a3ab287c8da13ec779b48"
+    },
     "Riskwise_data/datacsiro.xlsx": {
       "checksum": "5bca2cf33f61cf23a8c4315a3b7f8edf"
+    },
+    "Untitled_8_inside_graph.R": {
+      "checksum": "fdba137147db5053f88b742705f6f93e"
+    },
+    "version 10_fixed_graphand_decsion_sorted.R": {
+      "checksum": "c60b56adee000d4386f624581737833a"
+    },
+    "version_11_added_role.R": {
+      "checksum": "b49e745c3607f9f6157041807624981a"
+    },
+    "version_12_roles_in_filter.R": {
+      "checksum": "89acaa590ba17696a883a1e1ab8747eb"
     },
     "version_3.R": {
       "checksum": "7b1e56e75a6ec728b38a4e5754f67bff"
@@ -2606,6 +2621,15 @@
     },
     "version_5.R": {
       "checksum": "bb3d1227c7fd221bd7b6712650948ea5"
+    },
+    "version_7.R": {
+      "checksum": "a861653d9fc99e96be6d61ad7fb53750"
+    },
+    "version6.R": {
+      "checksum": "731278714fb44c2831064499e07436bb"
+    },
+    "version9_for_decision_rankking.R": {
+      "checksum": "414cf67ef2e19c43adcf51d9eaca95ff"
     }
   },
   "users": null
