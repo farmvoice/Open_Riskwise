@@ -335,6 +335,7 @@ server <- function(input, output, session) {
         count(Category) %>%
         mutate(percentage = n / sum(n)) # Calculate raw percentage for internal use
       
+      
       # Create a full set of categories with 0% for missing ones
       full_categories_df <- tibble(Category = factor(category_order_vector, levels = category_order_vector)) %>%
         left_join(df_summary, by = "Category") %>%
@@ -409,7 +410,7 @@ server <- function(input, output, session) {
           geom_line(size=1.2) +
           geom_point(size=4) +
           scale_x_continuous(limits=c(0,10), breaks=seq(0,10,2)) +
-          scale_y_continuous(labels=scales::percent) +
+          scale_y_continuous(labels=scales::percent, expand = expansion(mult = c(0.03, .15))) +
           labs(title=paste("Comparison of", input$variable_selector), x="Score (0-10)", y="Percentage of Respondents", color="Population") +
           theme_minimal(base_size=15) +
           theme(plot.title=element_text(hjust=0.5, face="bold"), legend.position="bottom")
@@ -431,20 +432,31 @@ server <- function(input, output, session) {
           geom_line(color = "#006699", size = 1.2) +
           geom_point(color = "#006699", size = 4) +
           scale_x_continuous(limits = c(-0.5, 10.5), breaks = seq(0, 10, 2), expand = c(0,0)) +
-          scale_y_continuous(labels = scales::percent, expand = expansion(mult = c(0, .1))) + # Changed labels and expand
+          scale_y_continuous(labels = scales::percent) + # Changed labels and expand
           labs(title = paste("Your Response vs. Peer Distribution for", input$variable_selector),
                x = "Score (0-10)",
-               y = "Percentage of Respondents (Peers)") + # Changed y-axis label
+               y = "Percentage of Respondents") + # Changed y-axis label
           theme_minimal(base_size = 15) +
           theme(plot.title = element_text(hjust = 0.5, face = "bold"))
         
         # Add user's response as a vertical line and text
         if (length(user_value) > 0 && !is.na(user_value)) {
-          p <- p +
-            geom_vline(xintercept = user_value, linetype = "dashed", color = "red", size = 1) +
-            geom_text(data = data.frame(value = user_value),
-                      aes(x = value, y = max(peers_plot_data$percentage) * 0.9, label = "My Response"), # Adjust y position
-                      color = "red", fontface = "bold", size = 5, hjust = -0.1, vjust = 0) # Adjust hjust/vjust for label position
+        band_width <- 0.5 # Define width of the highlight band (e.g., 1 unit on the x-axis)
+        p <- p +
+          geom_rect(
+            aes(xmin = user_value - band_width, xmax = user_value + band_width,
+                ymin = 0, ymax = 1.0), # Span full y-axis (0-1 for percentage)
+            fill = "#006699", alpha = 0.8, inherit.aes = FALSE # Blue color, semi-opaque
+          ) +
+          # No geom_vline, as geom_rect replaces it
+          geom_text(
+            data = data.frame(value = user_value),
+            aes(x = user_value, y = 0.5), # Position text vertically in the middle of the plot
+            label = "My Response",
+            color = "white", fontface = "bold", size = 5,
+            angle = 90, # Rotate text by 90 degrees
+            hjust = 0.5, vjust = 0.5 # Center text within its bounding box for rotation
+          )
         }
         p
       } else {
