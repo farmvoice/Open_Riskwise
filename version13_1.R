@@ -512,8 +512,8 @@ server <- function(input, output, session) {
             geom_text(aes(x = user_value, y = (max(peers_plot_data$percentage, 0.1) * 0.5)),
                       label = "My Response", color = "#006699", fontface = "bold", size = 6.5, angle = 90)
           
-          #geom_rect(aes(xmin = user_value - band_width, xmax = user_value + band_width, ymin = 0, ymax = Inf), fill = "#006699", alpha = 0.8) +
-          #geom_text(aes(x = user_value, y = (max(peers_plot_data$percentage, 0.1) * 0.5)), label = "My Response", color = "white", fontface = "bold", size = 5, angle = 90)
+            #geom_rect(aes(xmin = user_value - band_width, xmax = user_value + band_width, ymin = 0, ymax = Inf), fill = "#006699", alpha = 0.8) +
+            #geom_text(aes(x = user_value, y = (max(peers_plot_data$percentage, 0.1) * 0.5)), label = "My Response", color = "white", fontface = "bold", size = 5, angle = 90)
         }
         p
       } else {

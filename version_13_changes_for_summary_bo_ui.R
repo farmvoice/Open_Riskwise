@@ -178,9 +178,8 @@ ui <- fluidPage(
              condition = "input.variable_selector != 'Decision Ranking'",
              conditionalPanel(
                condition = "input.compare_mode == 'compare_me'",
-               
+               h4("My Response Selector", align = "center"),
                wellPanel(
-                 h4("My Response Selector", align = "center"),
                  selectInput("client_selector", "Select Your ID:", choices = client_choices),
                  hr(),
                  uiOutput("user_response_text_ui")
@@ -389,7 +388,10 @@ server <- function(input, output, session) {
     )
   }
   
-  # Main summary output UI logic
+  # =================================================================
+  # ==== MODIFIED Main Summary UI Output ============================
+  # =================================================================
+  
   output$summary_output_ui <- renderUI({
     req(input$variable_selector == "Risk Attitude")
     
@@ -402,16 +404,17 @@ server <- function(input, output, session) {
       stats1 <- get_summary_stats(filtered_data(1))
       stats2 <- get_summary_stats(filtered_data(2))
       
-      # Create vertically stacked summary boxes (one after another)
+      # MODIFIED: Create vertically stacked summary boxes (one after another)
       div(
         create_summary_box_ui(stats1, title = population_names()$pop1),
         create_summary_box_ui(stats2, title = population_names()$pop2)
       )
     }
+    # No summary box for 'compare_me' mode, which is the existing behavior
   })
   
   # =================================================================
-  # ==== Main Plotting Logic (MODIFIED) =============================
+  # ==== Main Plotting Logic ========================================
   # =================================================================
   
   output$main_plot <- renderPlot({
@@ -433,13 +436,6 @@ server <- function(input, output, session) {
         data1 <- filtered_data(1) %>% count(review_type) %>% mutate(percentage = n/sum(n), population = pop1_name)
         data2 <- filtered_data(2) %>% count(review_type) %>% mutate(percentage = n/sum(n), population = pop2_name)
         plot_data <- bind_rows(data1, data2)
-        
-        # --- NEW: Set factor levels to control legend order ---
-        if(nrow(plot_data) > 0) {
-          plot_data <- plot_data %>%
-            mutate(population = factor(population, levels = c(pop1_name, pop2_name)))
-        }
-        
         if(nrow(plot_data) == 0) return(ggplot() + annotate("text", 0.5, 0.5, label="No data.", size=6) + theme_void())
         ggplot(plot_data, aes(x=review_type, y=percentage, fill=population)) +
           geom_col(position = "dodge") + scale_y_continuous(labels = scales::percent) +
@@ -465,17 +461,10 @@ server <- function(input, output, session) {
         }
         combined_data <- bind_rows(process_plot_data(filtered_data(1), pop1_name, selected_var_name),
                                    process_plot_data(filtered_data(2), pop2_name, selected_var_name))
-        
-        # --- NEW: Set factor levels to control legend order ---
-        if(nrow(combined_data) > 0) {
-          combined_data <- combined_data %>%
-            mutate(population = factor(population, levels = c(pop1_name, pop2_name)))
-        }
-        
         if(nrow(combined_data)==0) return(ggplot()+annotate("text",x=0.5,y=0.5,label="No data.",size=6)+theme_void())
         ggplot(combined_data, aes(x=value, y=percentage, color=population)) +
           geom_line(size=1.2) + geom_point(size=4) +
-          scale_x_continuous(limits=c(-0.3,10.5), breaks=seq(0,10,2), expand = c(0,0)) +
+          scale_x_continuous(limits=c(-0.5,10.5), breaks=seq(0,10,2), expand = c(0,0)) +
           scale_y_continuous(labels=scales::percent, expand = expansion(mult = c(0.03, .15))) +
           labs(title=paste("Comparison of", input$variable_selector), x="Score (0-10)", y="Percentage of Respondents", color="Population") +
           theme_minimal(base_size=15) +
@@ -498,22 +487,15 @@ server <- function(input, output, session) {
         if (nrow(peers_plot_data) == 0) return(ggplot() + annotate("text", 0.5, 0.5, label="No peer data.", size=6) + theme_void())
         p <- ggplot(peers_plot_data, aes(x = value, y = percentage)) +
           geom_line(color = "#006699", size = 1.2) + geom_point(color = "#006699", size = 4) +
-          scale_x_continuous(limits = c(-0.5, 10.5), breaks = seq(0, 10, 2)) +
+          scale_x_continuous(limits = c(-0.2, 10.5), breaks = seq(0, 10, 2)) +
           scale_y_continuous(labels = scales::percent, expand = expansion(mult = c(0.03, .15))) +
           labs(title = paste("Your Response vs. Peer Distribution for", input$variable_selector), x = "Score (0-10)", y = "Percentage of Respondents") +
           theme_minimal(base_size = 15) + theme(plot.title = element_text(hjust = 0.5, face = "bold"))
         if (length(user_value) > 0 && !is.na(user_value)) {
           band_width <- 0.5
           p <- p +
-            # Faded rectangle in the background
-            geom_rect(aes(xmin = user_value - band_width, xmax = user_value + band_width, ymin = 0, ymax = Inf),
-                      fill = "#006699", alpha = 0.05) +
-            # Darker text for readability
-            geom_text(aes(x = user_value, y = (max(peers_plot_data$percentage, 0.1) * 0.5)),
-                      label = "My Response", color = "#006699", fontface = "bold", size = 6.5, angle = 90)
-          
-          #geom_rect(aes(xmin = user_value - band_width, xmax = user_value + band_width, ymin = 0, ymax = Inf), fill = "#006699", alpha = 0.8) +
-          #geom_text(aes(x = user_value, y = (max(peers_plot_data$percentage, 0.1) * 0.5)), label = "My Response", color = "white", fontface = "bold", size = 5, angle = 90)
+            geom_rect(aes(xmin = user_value - band_width, xmax = user_value + band_width, ymin = 0, ymax = Inf), fill = "#006699", alpha = 0.8) +
+            geom_text(aes(x = user_value, y = (max(peers_plot_data$percentage, 0.1) * 0.5)), label = "My Response", color = "white", fontface = "bold", size = 5, angle = 90)
         }
         p
       } else {
@@ -544,7 +526,7 @@ server <- function(input, output, session) {
           }
           ggplot(plot_data, aes(x=value, y=percentage)) +
             geom_line(color="#006699",size=1.2) + geom_point(color="#006699",size=4) +
-            scale_x_continuous(limits=c(-0.3,10.5), breaks=seq(0,10,2), expand = c(0,0)) +
+            scale_x_continuous(limits=c(-0.2,10.5), breaks=seq(0,10,2), expand = c(0,0)) +
             scale_y_continuous(labels=scales::percent, expand = expansion(mult = c(0.03, 0.15))) +
             labs(title=paste("Distribution of",input$variable_selector), x="Score (0-10)", y="Percentage of Respondents") +
             theme_minimal(base_size=15) + theme(plot.title=element_text(hjust=0.5,face="bold"))
@@ -554,6 +536,7 @@ server <- function(input, output, session) {
   })
 }
 
+# =================================================
 # =================================================================
 # 5. Run the Shiny App
 # =================================================================

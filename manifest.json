@@ -2575,10 +2575,10 @@
   },
   "files": {
     ".RData": {
-      "checksum": "6b9dc53e06d8b7b0574510761b49ca44"
+      "checksum": "64eaf8fa494d16a92ed114c52c5d1619"
     },
     "app.R": {
-      "checksum": "83845235eb2a8dd96f25e453a007e99c"
+      "checksum": "8d2cc3772ce4ada8aecb0f906e58318d"
     },
     "creating_data_frame.R": {
       "checksum": "b5ad64356b8b9048d8c176e67375a9c8"
@@ -2613,6 +2613,9 @@
     "version_12_roles_in_filter.R": {
       "checksum": "89acaa590ba17696a883a1e1ab8747eb"
     },
+    "version_13_changes_for_summary_bo_ui.R": {
+      "checksum": "bcf6cc478caddc91ce84b3473fad02cd"
+    },
     "version_3.R": {
       "checksum": "7b1e56e75a6ec728b38a4e5754f67bff"
     },
@@ -2624,6 +2627,9 @@
     },
     "version_7.R": {
       "checksum": "a861653d9fc99e96be6d61ad7fb53750"
+    },
+    "version13_1.R": {
+      "checksum": "434d047761df747e5c8b81bae17d8651"
     },
     "version6.R": {
       "checksum": "731278714fb44c2831064499e07436bb"
