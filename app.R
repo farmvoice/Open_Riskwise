@@ -354,8 +354,8 @@ server <- function(input, output, session) {
     risk_data %>%
       mutate(category = factor(case_when(
         risk_attitude <= 1 ~ "Very Risk Avoidant",
-        risk_attitude <= 4 ~ "Risk Avoidant",
-        risk_attitude == 5 ~ "Neutral",
+        risk_attitude <= 3 ~ "Risk Avoidant",
+        risk_attitude <= 6 ~ "Neutral",
         risk_attitude <= 8 ~ "Risk Tolerant",
         TRUE ~ "Very Risk Tolerant"
       ), levels = category_order)) %>%
