@@ -16,7 +16,7 @@ library(scales)
 # 2. Load and Prepare Data
 # =================================================================
 # Load base survey data and client identifier data
-survey_data <- read_csv("Riskwise_data/cleaned_survey_data.csv", show_col_types = FALSE)
+survey_data <- read_csv("Riskwise_data/cleaned_New_Question_type_raw.csv", show_col_types = FALSE)
 survey_client_id <- read_csv("Riskwise_data/Client_ID_A.csv", show_col_types = FALSE)
 
 # Add the 'role' Column based on client responses
@@ -32,11 +32,12 @@ client_data_with_roles <- survey_client_id %>%
 
 # Select and prepare the role data for joining
 roles_to_join <- client_data_with_roles %>%
-  select(client_id = `RiskWi$e ID`, role)
+  select(clientid = `RiskWi$e ID`, role)
+#select(client_id = `RiskWi$e ID`, role) #changed client_id to clientid for new Question AN
 
 # Join the role information to the main survey dataset
 survey_data <- survey_data %>%
-  left_join(roles_to_join, by = "client_id")
+  left_join(roles_to_join, by = "clientid") #same here client_id -> clientid
 
 
 # a bit cleaning of duplicates
@@ -46,7 +47,7 @@ message(paste("Number of rows after joining with roles data:", rows_after_join))
 
 # Keep only the first occurrence of each unique client_id
 survey_data <- survey_data %>%
-  distinct(client_id, .keep_all = TRUE)
+  distinct(clientid, .keep_all = TRUE) #same here client_id -> clientid
 
 #nrow(survey_data)  # after removing duplicates
 
@@ -70,7 +71,7 @@ decision_ranking_long <- survey_data %>%
 # --- B: Prepare "Risk Attitude" and other data ---
 risk_attitude_df <- survey_data %>%
   select(
-    client_id,
+    clientid, # same here client_id -> clientid
     what_balance_guides_you_between_intuition_gut_feel_informed_by_past_experience_and_numerical_calculation_data_driven_when_making_a,
     what_balance_do_you_believe_an_advisor_consultant_is_guided_by_when_advising_on,
     what_balance_do_you_take_between_production_or_profitability_expectations_when_making,
@@ -103,7 +104,7 @@ risk_attitude_df <- risk_attitude_df %>%
 # --- C. Prepare "Review Process" Data ---
 review_process_df <- survey_data %>%
   select(
-    client_id,
+    clientid, #same here client_id
     review_type = have_you_undertaken_any_review_of_how_you_made_your_last,
     region = which_region_are_your_farming_activities_based,
     grower_group = which_group_are_you_associated_with,
@@ -117,7 +118,7 @@ all_regions <- c("All Regions", sort(unique(na.omit(survey_data$which_region_are
 all_groups <- c("All Groups", sort(unique(na.omit(survey_data$which_group_are_you_associated_with))))
 all_roles <- c("All Roles", "Grower", "Advisor", "Other") # NEW: Choices for the role filter
 decision_choices <- c("All Decisions", sort(unique(na.omit(survey_data$selected_risk_decision))))
-client_choices <- sort(unique(na.omit(risk_attitude_df$client_id)))
+client_choices <- sort(unique(na.omit(risk_attitude_df$clientid)))
 
 plot_vars <- c("Risk Attitude" = "risk_attitude", "Decision Ranking" = "decision_ranking",
                "Review Process" = "review_process",
@@ -278,7 +279,7 @@ server <- function(input, output, session) {
   selected_user_data <- reactive({
     req(input$compare_mode == "compare_me", input$client_selector)
     df <- if (input$variable_selector == "Review Process") review_process_df else risk_attitude_df
-    df %>% filter(client_id == input$client_selector)
+    df %>% filter(clientid == input$client_selector)
   })
   
   plot_population_sizes <- reactive({
@@ -286,7 +287,7 @@ server <- function(input, output, session) {
       if (metric_name == "Decision Ranking") {
         return(if (is.null(data_df)) 0 else nrow(data_df))
       }
-      return(if (is.null(data_df) || nrow(data_df) == 0) 0 else n_distinct(data_df$client_id))
+      return(if (is.null(data_df) || nrow(data_df) == 0) 0 else n_distinct(data_df$clientid))
     }
     
     pop1_data <- filtered_data(1)
@@ -354,8 +355,8 @@ server <- function(input, output, session) {
     risk_data %>%
       mutate(category = factor(case_when(
         risk_attitude <= 1 ~ "Very Risk Avoidant",
-        risk_attitude <= 4 ~ "Risk Avoidant",
-        risk_attitude == 5 ~ "Neutral",
+        risk_attitude <= 3 ~ "Risk Avoidant",
+        risk_attitude <= 6 ~ "Neutral",
         risk_attitude <= 8 ~ "Risk Tolerant",
         TRUE ~ "Very Risk Tolerant"
       ), levels = category_order)) %>%
@@ -512,8 +513,8 @@ server <- function(input, output, session) {
             geom_text(aes(x = user_value, y = (max(peers_plot_data$percentage, 0.1) * 0.5)),
                       label = "My Response", color = "#006699", fontface = "bold", size = 6.5, angle = 90)
           
-            #geom_rect(aes(xmin = user_value - band_width, xmax = user_value + band_width, ymin = 0, ymax = Inf), fill = "#006699", alpha = 0.8) +
-            #geom_text(aes(x = user_value, y = (max(peers_plot_data$percentage, 0.1) * 0.5)), label = "My Response", color = "white", fontface = "bold", size = 5, angle = 90)
+          #geom_rect(aes(xmin = user_value - band_width, xmax = user_value + band_width, ymin = 0, ymax = Inf), fill = "#006699", alpha = 0.8) +
+          #geom_text(aes(x = user_value, y = (max(peers_plot_data$percentage, 0.1) * 0.5)), label = "My Response", color = "white", fontface = "bold", size = 5, angle = 90)
         }
         p
       } else {
