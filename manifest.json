@@ -10,6 +10,58 @@
     "has_parameters": false
   },
   "packages": {
+    "AzureAuth": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "AzureAuth",
+        "Title": "Authentication Services for Azure Active Directory",
+        "Version": "1.3.3",
+        "Authors@R": "c(\n    person(\"Hong\", \"Ooi\", , \"hongooi73@gmail.com\", role = c(\"aut\", \"cre\")),\n    person(\"Tyler\", \"Littlefield\", role=\"ctb\"),\n    person(\"httr development team\", role=\"ctb\", comment=\"Original OAuth listener code\"),\n    person(\"Scott\", \"Holden\", , role = \"ctb\", comment = \"Advice on AAD authentication\"),\n    person(\"Chris\", \"Stone\", , role = \"ctb\", comment = \"Advice on AAD authentication\"),\n    person(\"Microsoft\", role=\"cph\")\n    )",
+        "Description": "Provides Azure Active Directory (AAD) authentication functionality for R users of Microsoft's 'Azure' cloud <https://azure.microsoft.com/>. Use this package to obtain 'OAuth' 2.0 tokens for services including Azure Resource Manager, Azure Storage and others. It supports both AAD v1.0 and v2.0, as well as multiple authentication methods, including device code and resource owner grant. Tokens are cached in a user-specific directory obtained using the 'rappdirs' package. The interface is based on the 'OAuth' framework in the 'httr' package, but customised and streamlined for Azure. Part of the 'AzureR' family of packages.",
+        "URL": "https://github.com/Azure/AzureAuth https://github.com/Azure/AzureR",
+        "BugReports": "https://github.com/Azure/AzureAuth/issues",
+        "License": "MIT + file LICENSE",
+        "VignetteBuilder": "knitr",
+        "Depends": "R (>= 3.3)",
+        "Imports": "utils, httr (>= 1.3), openssl, jsonlite, jose, R6, rappdirs",
+        "Suggests": "knitr, rmarkdown, testthat, httpuv, shiny, shinyjs, AzureRMR,\nAzureGraph",
+        "RoxygenNote": "7.1.1",
+        "NeedsCompilation": "no",
+        "Packaged": "2021-09-13 08:32:03 UTC; hongo",
+        "Author": "Hong Ooi [aut, cre],\n  Tyler Littlefield [ctb],\n  httr development team [ctb] (Original OAuth listener code),\n  Scott Holden [ctb] (Advice on AAD authentication),\n  Chris Stone [ctb] (Advice on AAD authentication),\n  Microsoft [cph]",
+        "Maintainer": "Hong Ooi <hongooi73@gmail.com>",
+        "Repository": "CRAN",
+        "Date/Publication": "2021-09-13 09:40:02 UTC",
+        "Built": "R 4.4.0; ; 2024-05-31 13:57:54 UTC; unix"
+      }
+    },
+    "AzureGraph": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "AzureGraph",
+        "Title": "Simple Interface to 'Microsoft Graph'",
+        "Version": "1.3.4",
+        "Authors@R": "c(\n    person(\"Hong\", \"Ooi\", , \"hongooi73@gmail.com\", role = c(\"aut\", \"cre\")),\n    person(\"Microsoft\", role=\"cph\")\n    )",
+        "Description": "A simple interface to the 'Microsoft Graph' API <https://learn.microsoft.com/en-us/graph/overview>. 'Graph' is a comprehensive framework for accessing data in various online Microsoft services. This package was originally intended to provide an R interface only to the 'Azure Active Directory' part, with a view to supporting interoperability of R and 'Azure': users, groups, registered apps and service principals. However it has since been expanded into a more general tool for interacting with Graph. Part of the 'AzureR' family of packages.",
+        "URL": "https://github.com/Azure/AzureGraph\nhttps://github.com/Azure/AzureR",
+        "BugReports": "https://github.com/Azure/AzureGraph/issues",
+        "License": "MIT + file LICENSE",
+        "VignetteBuilder": "knitr",
+        "Depends": "R (>= 3.3)",
+        "Imports": "AzureAuth (>= 1.0.1), utils, httr (>= 1.3), jsonlite, openssl,\ncurl, R6",
+        "Suggests": "AzureRMR, vctrs, knitr, rmarkdown, testthat",
+        "RoxygenNote": "7.1.1",
+        "NeedsCompilation": "no",
+        "Packaged": "2023-09-06 00:03:14 UTC; hongo",
+        "Author": "Hong Ooi [aut, cre],\n  Microsoft [cph]",
+        "Maintainer": "Hong Ooi <hongooi73@gmail.com>",
+        "Repository": "CRAN",
+        "Date/Publication": "2023-09-06 04:20:02 UTC",
+        "Built": "R 4.4.0; ; 2024-05-31 19:33:32 UTC; unix"
+      }
+    },
     "DT": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -97,6 +149,32 @@
         "Built": "R 4.4.0; x86_64-apple-darwin20; 2024-04-24 18:04:52 UTC; unix"
       }
     },
+    "Microsoft365R": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "Microsoft365R",
+        "Title": "Interface to the 'Microsoft 365' Suite of Cloud Services",
+        "Version": "2.4.1",
+        "Authors@R": "c(\n    person(\"Hong\", \"Ooi\", , \"hongooi73@gmail.com\", role = c(\"aut\", \"cre\")),\n    person(\"Roman\", \"Zenka\", role=\"ctb\"),\n    person(\"Robert\", \"Ashton\", role=\"ctb\"),\n    person(\"Philip\", \"Zheng\", role=\"ctb\"),\n    person(\"Microsoft\", role=\"cph\")\n    )",
+        "Description": "An interface to the 'Microsoft 365' (formerly known as 'Office 365') suite of cloud services, building on the framework supplied by the 'AzureGraph' package. Enables access from R to data stored in 'Teams', 'SharePoint Online' and 'OneDrive', including the ability to list drive folder contents, upload and download files, send messages, and retrieve data lists. Also provides a full-featured 'Outlook' email client, with the ability to send emails and manage emails and mail folders.",
+        "URL": "https://github.com/Azure/Microsoft365R\nhttps://github.com/Azure/AzureR",
+        "BugReports": "https://github.com/Azure/Microsoft365R/issues",
+        "License": "MIT + file LICENSE",
+        "VignetteBuilder": "knitr",
+        "Depends": "R (>= 3.3)",
+        "Imports": "AzureAuth, AzureGraph (>= 1.3.1), utils, parallel, tools,\ncurl, httr, jsonlite, R6, vctrs, mime",
+        "Suggests": "openssl, knitr, rmarkdown, testthat, blastula, emayili,\nreadr, readxl",
+        "RoxygenNote": "7.2.1",
+        "NeedsCompilation": "no",
+        "Packaged": "2025-03-01 16:25:48 UTC; hongo",
+        "Author": "Hong Ooi [aut, cre],\n  Roman Zenka [ctb],\n  Robert Ashton [ctb],\n  Philip Zheng [ctb],\n  Microsoft [cph]",
+        "Maintainer": "Hong Ooi <hongooi73@gmail.com>",
+        "Repository": "CRAN",
+        "Date/Publication": "2025-03-02 04:00:06 UTC",
+        "Built": "R 4.4.1; ; 2025-03-02 04:55:00 UTC; unix"
+      }
+    },
     "R6": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -167,6 +245,34 @@
         "Date/Publication": "2024-01-09 08:20:35 UTC",
         "Built": "R 4.4.0; x86_64-apple-darwin20; 2024-04-07 20:07:24 UTC; unix",
         "Archs": "Rcpp.so.dSYM"
+      }
+    },
+    "askpass": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "askpass",
+        "Type": "Package",
+        "Title": "Password Entry Utilities for R, Git, and SSH",
+        "Version": "1.2.0",
+        "Authors@R": "person(\"Jeroen\", \"Ooms\", role = c(\"aut\", \"cre\"), \n    email = \"jeroen@berkeley.edu\", comment = c(ORCID = \"0000-0002-4035-0289\"))",
+        "Description": "Cross-platform utilities for prompting the user for credentials or a \n    passphrase, for example to authenticate with a server or read a protected key.\n    Includes native programs for MacOS and Windows, hence no 'tcltk' is required. \n    Password entry can be invoked in two different ways: directly from R via the \n    askpass() function, or indirectly as password-entry back-end for 'ssh-agent' \n    or 'git-credential' via the SSH_ASKPASS and GIT_ASKPASS environment variables.\n    Thereby the user can be prompted for credentials or a passphrase if needed \n    when R calls out to git or ssh.",
+        "License": "MIT + file LICENSE",
+        "URL": "https://github.com/r-lib/askpass",
+        "BugReports": "https://github.com/r-lib/askpass/issues",
+        "Encoding": "UTF-8",
+        "Imports": "sys (>= 2.1)",
+        "RoxygenNote": "7.2.3",
+        "Suggests": "testthat",
+        "Language": "en-US",
+        "NeedsCompilation": "yes",
+        "Packaged": "2023-09-03 19:16:12 UTC; jeroen",
+        "Author": "Jeroen Ooms [aut, cre] (<https://orcid.org/0000-0002-4035-0289>)",
+        "Maintainer": "Jeroen Ooms <jeroen@berkeley.edu>",
+        "Repository": "CRAN",
+        "Date/Publication": "2023-09-03 20:00:02 UTC",
+        "Built": "R 4.4.0; x86_64-apple-darwin20; 2024-04-07 22:38:08 UTC; unix",
+        "Archs": "askpass.so.dSYM"
       }
     },
     "base64enc": {
@@ -531,6 +637,36 @@
         "Repository": "CRAN",
         "Date/Publication": "2023-11-23 08:50:07 UTC",
         "Built": "R 4.4.0; ; 2024-04-07 22:38:37 UTC; unix"
+      }
+    },
+    "curl": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "curl",
+        "Type": "Package",
+        "Title": "A Modern and Flexible Web Client for R",
+        "Version": "5.2.1",
+        "Authors@R": "c(\n    person(\"Jeroen\", \"Ooms\", role = c(\"aut\", \"cre\"), email = \"jeroen@berkeley.edu\",\n      comment = c(ORCID = \"0000-0002-4035-0289\")),\n    person(\"Hadley\", \"Wickham\", , \"hadley@rstudio.com\", role = \"ctb\"),\n    person(\"RStudio\", role = \"cph\")\n    )",
+        "Description": "The curl() and curl_download() functions provide highly\n    configurable drop-in replacements for base url() and download.file() with\n    better performance, support for encryption (https, ftps), gzip compression,\n    authentication, and other 'libcurl' goodies. The core of the package implements a\n    framework for performing fully customized requests where data can be processed\n    either in memory, on disk, or streaming via the callback or connection\n    interfaces. Some knowledge of 'libcurl' is recommended; for a more-user-friendly\n    web client see the 'httr' package which builds on this package with http\n    specific tools and logic.",
+        "License": "MIT + file LICENSE",
+        "SystemRequirements": "libcurl: libcurl-devel (rpm) or\nlibcurl4-openssl-dev (deb).",
+        "URL": "https://jeroen.r-universe.dev/curl https://curl.se/libcurl/",
+        "BugReports": "https://github.com/jeroen/curl/issues",
+        "Suggests": "spelling, testthat (>= 1.0.0), knitr, jsonlite, later,\nrmarkdown, httpuv (>= 1.4.4), webutils",
+        "VignetteBuilder": "knitr",
+        "Depends": "R (>= 3.0.0)",
+        "RoxygenNote": "7.3.0",
+        "Encoding": "UTF-8",
+        "Language": "en-US",
+        "NeedsCompilation": "yes",
+        "Packaged": "2024-02-26 21:12:31 UTC; jeroen",
+        "Author": "Jeroen Ooms [aut, cre] (<https://orcid.org/0000-0002-4035-0289>),\n  Hadley Wickham [ctb],\n  RStudio [cph]",
+        "Maintainer": "Jeroen Ooms <jeroen@berkeley.edu>",
+        "Repository": "CRAN",
+        "Date/Publication": "2024-03-01 23:22:46 UTC",
+        "Built": "R 4.4.0; x86_64-apple-darwin20; 2024-04-07 20:08:57 UTC; unix",
+        "Archs": "curl.so.dSYM"
       }
     },
     "digest": {
@@ -1091,6 +1227,34 @@
         "Archs": "httpuv.so.dSYM"
       }
     },
+    "httr": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "httr",
+        "Title": "Tools for Working with URLs and HTTP",
+        "Version": "1.4.7",
+        "Authors@R": "c(\n    person(\"Hadley\", \"Wickham\", , \"hadley@posit.co\", role = c(\"aut\", \"cre\")),\n    person(\"Posit, PBC\", role = c(\"cph\", \"fnd\"))\n  )",
+        "Description": "Useful tools for working with HTTP organised by HTTP verbs\n    (GET(), POST(), etc). Configuration functions make it easy to control\n    additional request components (authenticate(), add_headers() and so\n    on).",
+        "License": "MIT + file LICENSE",
+        "URL": "https://httr.r-lib.org/, https://github.com/r-lib/httr",
+        "BugReports": "https://github.com/r-lib/httr/issues",
+        "Depends": "R (>= 3.5)",
+        "Imports": "curl (>= 5.0.2), jsonlite, mime, openssl (>= 0.8), R6",
+        "Suggests": "covr, httpuv, jpeg, knitr, png, readr, rmarkdown, testthat\n(>= 0.8.0), xml2",
+        "VignetteBuilder": "knitr",
+        "Config/Needs/website": "tidyverse/tidytemplate",
+        "Encoding": "UTF-8",
+        "RoxygenNote": "7.2.3",
+        "NeedsCompilation": "no",
+        "Packaged": "2023-08-15 02:56:56 UTC; hadleywickham",
+        "Author": "Hadley Wickham [aut, cre],\n  Posit, PBC [cph, fnd]",
+        "Maintainer": "Hadley Wickham <hadley@posit.co>",
+        "Repository": "CRAN",
+        "Date/Publication": "2023-08-15 09:00:02 UTC",
+        "Built": "R 4.4.0; ; 2024-04-08 02:11:06 UTC; unix"
+      }
+    },
     "isoband": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -1147,6 +1311,35 @@
         "Repository": "CRAN",
         "Date/Publication": "2024-12-22 16:30:01 UTC",
         "Built": "R 4.4.1; ; 2024-12-22 17:06:48 UTC; unix"
+      }
+    },
+    "jose": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "jose",
+        "Type": "Package",
+        "Title": "JavaScript Object Signing and Encryption",
+        "Version": "1.2.1",
+        "Authors@R": "person(\"Jeroen\", \"Ooms\", role = c(\"aut\", \"cre\"), \n    email = \"jeroenooms@gmail.com\", comment = c(ORCID = \"0000-0002-4035-0289\"))",
+        "Description": "Read and write JSON Web Keys (JWK, rfc7517), generate and verify JSON\n    Web Signatures (JWS, rfc7515) and encode/decode JSON Web Tokens (JWT, rfc7519)\n    <https://datatracker.ietf.org/wg/jose/documents/>. These standards provide \n    modern signing and encryption formats that are natively supported by browsers\n    via the JavaScript WebCryptoAPI <https://www.w3.org/TR/WebCryptoAPI/#jose>, \n    and used by services like OAuth 2.0, LetsEncrypt, and Github Apps.",
+        "License": "MIT + file LICENSE",
+        "URL": "https://r-lib.r-universe.dev/jose",
+        "BugReports": "https://github.com/r-lib/jose/issues",
+        "Depends": "openssl (>= 1.2.1)",
+        "Imports": "jsonlite",
+        "RoxygenNote": "7.1.2",
+        "VignetteBuilder": "knitr",
+        "Suggests": "spelling, testthat, knitr, rmarkdown",
+        "Encoding": "UTF-8",
+        "Language": "en-US",
+        "NeedsCompilation": "no",
+        "Packaged": "2024-10-03 14:12:53 UTC; jeroen",
+        "Author": "Jeroen Ooms [aut, cre] (<https://orcid.org/0000-0002-4035-0289>)",
+        "Maintainer": "Jeroen Ooms <jeroenooms@gmail.com>",
+        "Repository": "CRAN",
+        "Date/Publication": "2024-10-04 12:20:01 UTC",
+        "Built": "R 4.4.1; ; 2024-10-04 12:59:31 UTC; unix"
       }
     },
     "jquerylib": {
@@ -1557,6 +1750,35 @@
         "Repository": "CRAN",
         "Date/Publication": "2023-11-27 15:26:12 UTC",
         "Built": "R 4.4.0; x86_64-apple-darwin20; 2024-04-24 18:04:51 UTC; unix"
+      }
+    },
+    "openssl": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "openssl",
+        "Type": "Package",
+        "Title": "Toolkit for Encryption, Signatures and Certificates Based on\nOpenSSL",
+        "Version": "2.2.0",
+        "Authors@R": "c(person(\"Jeroen\", \"Ooms\", role = c(\"aut\", \"cre\"), email = \"jeroen@berkeley.edu\",\n    comment = c(ORCID = \"0000-0002-4035-0289\")),\n    person(\"Oliver\", \"Keyes\", role = \"ctb\"))",
+        "Description": "Bindings to OpenSSL libssl and libcrypto, plus custom SSH key parsers.\n    Supports RSA, DSA and EC curves P-256, P-384, P-521, and curve25519. Cryptographic\n    signatures can either be created and verified manually or via x509 certificates. \n    AES can be used in cbc, ctr or gcm mode for symmetric encryption; RSA for asymmetric\n    (public key) encryption or EC for Diffie Hellman. High-level envelope functions \n    combine RSA and AES for encrypting arbitrary sized data. Other utilities include key\n    generators, hash functions (md5, sha1, sha256, etc), base64 encoder, a secure random\n    number generator, and 'bignum' math methods for manually performing crypto \n    calculations on large multibyte integers.",
+        "License": "MIT + file LICENSE",
+        "URL": "https://jeroen.r-universe.dev/openssl",
+        "BugReports": "https://github.com/jeroen/openssl/issues",
+        "SystemRequirements": "OpenSSL >= 1.0.2",
+        "VignetteBuilder": "knitr",
+        "Imports": "askpass",
+        "Suggests": "curl, testthat (>= 2.1.0), digest, knitr, rmarkdown,\njsonlite, jose, sodium",
+        "RoxygenNote": "7.2.3",
+        "Encoding": "UTF-8",
+        "NeedsCompilation": "yes",
+        "Packaged": "2024-05-16 15:50:21 UTC; jeroen",
+        "Author": "Jeroen Ooms [aut, cre] (<https://orcid.org/0000-0002-4035-0289>),\n  Oliver Keyes [ctb]",
+        "Maintainer": "Jeroen Ooms <jeroen@berkeley.edu>",
+        "Repository": "CRAN",
+        "Date/Publication": "2024-05-16 17:00:02 UTC",
+        "Built": "R 4.4.0; x86_64-apple-darwin20; 2024-05-16 19:07:05 UTC; unix",
+        "Archs": "openssl.so.dSYM"
       }
     },
     "pillar": {
@@ -2136,6 +2358,33 @@
         "Built": "R 4.4.0; ; 2024-04-08 00:38:53 UTC; unix"
       }
     },
+    "sys": {
+      "Source": "CRAN",
+      "Repository": "https://cran.rstudio.com",
+      "description": {
+        "Package": "sys",
+        "Type": "Package",
+        "Title": "Powerful and Reliable Tools for Running System Commands in R",
+        "Version": "3.4.2",
+        "Authors@R": "c(person(\"Jeroen\", \"Ooms\", role = c(\"aut\", \"cre\"), \n      email = \"jeroen@berkeley.edu\", comment = c(ORCID = \"0000-0002-4035-0289\")),\n    person(\"Gábor\", \"Csárdi\", , \"csardi.gabor@gmail.com\", role = \"ctb\"))",
+        "Description": "Drop-in replacements for the base system2() function with fine control\n    and consistent behavior across platforms. Supports clean interruption, timeout, \n    background tasks, and streaming STDIN / STDOUT / STDERR over binary or text \n    connections. Arguments on Windows automatically get encoded and quoted to work \n    on different locales.",
+        "License": "MIT + file LICENSE",
+        "URL": "https://jeroen.r-universe.dev/sys",
+        "BugReports": "https://github.com/jeroen/sys/issues",
+        "Encoding": "UTF-8",
+        "RoxygenNote": "7.1.1",
+        "Suggests": "unix (>= 1.4), spelling, testthat",
+        "Language": "en-US",
+        "NeedsCompilation": "yes",
+        "Packaged": "2023-05-22 21:45:03 UTC; jeroen",
+        "Author": "Jeroen Ooms [aut, cre] (<https://orcid.org/0000-0002-4035-0289>),\n  Gábor Csárdi [ctb]",
+        "Maintainer": "Jeroen Ooms <jeroen@berkeley.edu>",
+        "Repository": "CRAN",
+        "Date/Publication": "2023-05-23 07:50:02 UTC",
+        "Built": "R 4.4.0; x86_64-apple-darwin20; 2024-04-07 20:08:53 UTC; unix",
+        "Archs": "sys.so.dSYM"
+      }
+    },
     "tibble": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
@@ -2575,10 +2824,13 @@
   },
   "files": {
     ".RData": {
-      "checksum": "64eaf8fa494d16a92ed114c52c5d1619"
+      "checksum": "549997b590ee4e28f28eb378c294718e"
     },
     "app.R": {
       "checksum": "78bf44cfe3418fde5ba44f483d347325"
+    },
+    "Automatic_connection_to_sharepoint_list.R": {
+      "checksum": "ba444adee6dbdc9c8d45214905d3c577"
     },
     "check_some_error.R": {
       "checksum": "78bf44cfe3418fde5ba44f483d347325"
@@ -2619,9 +2871,6 @@
     "Riskwise_data/New_Question_type_raw.csv": {
       "checksum": "03413b09a72dab2b8f81eb7600b1f1f0"
     },
-    "Untitled_8_inside_graph.R": {
-      "checksum": "fdba137147db5053f88b742705f6f93e"
-    },
     "version 10_fixed_graphand_decsion_sorted.R": {
       "checksum": "c60b56adee000d4386f624581737833a"
     },
@@ -2633,27 +2882,6 @@
     },
     "version_13_changes_for_summary_bo_ui.R": {
       "checksum": "bcf6cc478caddc91ce84b3473fad02cd"
-    },
-    "version_3.R": {
-      "checksum": "7b1e56e75a6ec728b38a4e5754f67bff"
-    },
-    "version_4.R": {
-      "checksum": "5282303ef5fe7147aff42a734c4aae1c"
-    },
-    "version_5.R": {
-      "checksum": "bb3d1227c7fd221bd7b6712650948ea5"
-    },
-    "version_7.R": {
-      "checksum": "a861653d9fc99e96be6d61ad7fb53750"
-    },
-    "version13_1.R": {
-      "checksum": "37970e18a6700954df21576a1b8fb04f"
-    },
-    "version6.R": {
-      "checksum": "731278714fb44c2831064499e07436bb"
-    },
-    "version9_for_decision_rankking.R": {
-      "checksum": "414cf67ef2e19c43adcf51d9eaca95ff"
     }
   },
   "users": null
