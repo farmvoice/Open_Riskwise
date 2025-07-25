@@ -4,8 +4,8 @@ library(dplyr)
 library(stringr)
 
 # Read the dataset
-raw_data <- read_csv("Riskwise_data/New_Question_type_raw.csv")
-
+#raw_data <- read_csv("Riskwise_data/New_Question_type_raw.csv")
+raw_data <- read_csv("Riskwise_data/sharepoint_data_2025-07-25.csv", show_col_types = FALSE)
 # Get the original column names
 original_colnames <- colnames(raw_data)
 
@@ -32,4 +32,4 @@ head(raw_data)
 
 # --- Save the result ---
 # Save the data with renamed columns to a new CSV file
-write_csv(raw_data, "Riskwise_data/cleaned_New_Question_type_raw.csv")
+write_csv(raw_data, "Riskwise_data/cleaned_sharepoint_data_2025-07-25.csv")

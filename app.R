@@ -12,13 +12,17 @@ library(forcats)
 library(ggrepel)
 library(scales)
 
+
+
 # =================================================================
 # 2. Load and Prepare Data
 # =================================================================
 # Load base survey data and client identifier data
 # Please ensure these file paths are correct for your environment
-survey_data <- read_csv("Riskwise_data/cleaned_New_Question_type_raw.csv", show_col_types = FALSE)
-survey_client_id <- read_csv("Riskwise_data/Client_ID_A.csv", show_col_types = FALSE)
+#survey_data <- read_csv("Riskwise_data/cleaned_New_Question_type_raw.csv", show_col_types = FALSE)
+
+survey_data <- read_csv("Riskwise_data/cleaned_sharepoint_data_2025-07-25.csv", show_col_types = FALSE)
+survey_client_id <- read_csv("Riskwise_data/Client_id_B.csv", show_col_types = FALSE)
 
 # Add the 'role' Column based on client responses
 client_data_with_roles <- survey_client_id %>%
@@ -34,8 +38,10 @@ client_data_with_roles <- survey_client_id %>%
 # Select and prepare the role data for joining
 roles_to_join <- client_data_with_roles %>%
   select(clientid = `RiskWi$e ID`, role)
-
+  #select(ClientID = `RiskWi$e ID`, role)
+roles_to_join
 # Join the role information to the main survey dataset
+
 survey_data <- survey_data %>%
   left_join(roles_to_join, by = "clientid") %>%
   # FIX 1: Explicitly handle NA values that result from the left_join.
