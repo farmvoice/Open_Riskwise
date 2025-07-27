@@ -67,6 +67,107 @@ pull_sharepoint_data <- function() {
   })
 }
 
+#--------------------------------------------------------------------------------
+#Commented Section For Brandon to access information for 
+#For the server-server communication without user interaction (server-to-server authentication method) 
+#--------------------------------------------------------------------------------
+# =================================================================
+# 2. pull/download from sharepoint and Prepare Data server-server communication
+# =================================================================
+# pull_sharepoint_data <- function() {
+#   # --- Non-Interactive Authentication for Shiny App Deployment ---
+#   # In a server environment like Posit Connect, interactive browser-based
+#   # login is not possible. We use a service principal (app registration)
+#   # with client credentials for non-interactive authentication.
+#   #
+#   # IMPORTANT: Store these credentials as environment variables in your
+#   # deployment environment (e.g., Posit Connect). Do NOT hardcode them.
+#   # You will need to set the following variables in your Posit Connect dashboard's
+#   # 'Vars' tab:
+#   # - AZURE_TENANT_ID: Your Azure Active Directory Tenant ID
+#   # - AZURE_CLIENT_ID: The Application (client) ID for your app registration
+#   # - AZURE_CLIENT_SECRET: The client secret for your app registration
+#   
+#   tenant <- Sys.getenv("AZURE_TENANT_ID")
+#   app_id <- Sys.getenv("AZURE_CLIENT_ID")
+#   app_secret <- Sys.getenv("AZURE_CLIENT_SECRET")
+#   
+#   # 1. SharePoint Site URL
+#   sharepoint_site_url <- "https://farmvoice.sharepoint.com"
+#   
+#   # 2. The display name of your SharePoint List
+#   sharepoint_list_name <- "New Question type"
+#   sharepoint_list_name_client_id <- "Client ID"
+#   
+#   tryCatch({
+#     # Check if environment variables are set
+#     if (tenant == "" || app_id == "" || app_secret == "") {
+#       stop("Authentication Error: One or more environment variables (AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET) are not set in the deployment environment.")
+#     }
+#     
+#     message("Attempting to connect to SharePoint site using client credentials...")
+#     
+#     # Authenticate non-interactively and get the SharePoint site
+#     sharepoint_site <- get_sharepoint_site(
+#       site_url = sharepoint_site_url,
+#       tenant = tenant,
+#       app = app_id,
+#       password = app_secret,
+#       auth_type = "client_credentials" # Specify the non-interactive flow
+#     )
+#     
+#     message("✅ Successfully connected to site.")
+#     
+#     sharepoint_list <- sharepoint_site$get_list(sharepoint_list_name)
+#     sharepoint_list2 <- sharepoint_site$get_list(sharepoint_list_name_client_id)
+#     message("Fetching list items...")
+#     
+#     # Pull data
+#     d_data <- sharepoint_list$list_items()
+#     client_data <- sharepoint_list2$list_items()
+#     message("✅ Data pull successful.")
+#     
+#     return(list(survey_data = d_data, client_info = client_data))
+#     
+#   }, error = function(e) {
+#     message("❌ An error occurred during SharePoint connection or data pull:")
+#     message(e)
+#     return(NULL)
+#   })
+# }
+# 
+# Action Steps to Get This Working
+# To use the code above, you need to create an App Registration in your organization's Microsoft Azure portal. This is a one-time setup.
+# 1.	Create the App Registration in Azure:
+# o	Navigate to the Azure Active Directory portal.
+# o	Go to App registrations and click New registration.
+# o	Give it a name (e.g., RiskwiseShinyApp).
+# o	Under "Supported account types," select the option for accounts in your organizational directory only.
+# o	Click Register.
+# 2.	Get the Credentials:
+# o	Client ID: On the app's overview page, copy the Application (client) ID.
+# o	Tenant ID: Also on the overview page, copy the Directory (tenant) ID.
+# o	Client Secret: Go to Certificates & secrets, click New client secret, give it a description, set an expiration, and click Add. Copy the secret's value immediately. It will be hidden after you leave the page.
+# 3.	Grant SharePoint Permissions:
+# o	Go to the API permissions section of your app registration.
+# o	Click Add a permission -> SharePoint.
+# o	Select Application permissions (NOT Delegated).
+# o	Choose Sites.Read.All (or Sites.ReadWrite.All if you need to write data). This allows the app to read from all SharePoint sites.
+# o	Click Add permissions.
+# o	Finally, click the Grant admin consent for [Your Organization] button to approve the permissions. This step is crucial.
+# 4.	Set Environment Variables in Posit Connect:
+# o	Open your application in the Posit Connect dashboard.
+# o	Go to the Vars tab.
+# o	Click Add Variable and create the following three entries, pasting the values you copied from Azure:
+# 	AZURE_CLIENT_ID
+# 	AZURE_CLIENT_SECRET
+# 	AZURE_TENANT_ID
+
+#-------------------------------------------------------------------------
+# End of commented section for Brendon to look fro
+#----------------------------------------------------------------------------
+
+
 sharepoint_output <- pull_sharepoint_data()
 
 # FIX 3: Extract the data frames from the list into separate variables
@@ -153,8 +254,8 @@ if (!is.null(d_data) && nrow(d_data) > 0) {
       "Number of years since you started your farming career?" = "Numberofyearssinceyoustartedyour",
       "Number of full-time equivalent employees (including owner)?" = "Numberoffull_x002d_timeequivalen",
       "Type of business structure?" = "Typeofbusinessstructure_x003f_"
-      )
-      
+    )
+  
   message("✅ All columns successfully renamed.")
   # --- END: COMPLETE COLUMN RENAMING ---
   
@@ -187,14 +288,14 @@ if (!is.null(d_data) && nrow(d_data) > 0) {
   #message("Checking for and converting any list-columns client_info...")
   #for (col_name in names(client_data)) {
   #    if (is.list(client_data[[col_name]])) {
-   #     message(paste("Converting list-column:", col_name))
-    #    client_data[[col_name]] <- sapply(client_data[[col_name]], function(x) {
-     #     if (is.null(x) || length(x) == 0) return(NA_character_)
-      #    paste(unlist(x), collapse = "; ")
-       # })
-      #}
-    #}
-    
+  #     message(paste("Converting list-column:", col_name))
+  #    client_data[[col_name]] <- sapply(client_data[[col_name]], function(x) {
+  #     if (is.null(x) || length(x) == 0) return(NA_character_)
+  #    paste(unlist(x), collapse = "; ")
+  # })
+  #}
+  #}
+  
   
   # --- START: SAVE TO CSV ---
   output_folder <- "SharePoint_Data"
@@ -287,7 +388,7 @@ client_data_with_roles <- survey_client_id %>%
 # Select and prepare the role data for joining
 roles_to_join <- client_data_with_roles %>%
   select(clientid = `RiskWi$e ID`, role)
-  #select(ClientID = `RiskWi$e ID`, role)
+#select(ClientID = `RiskWi$e ID`, role)
 roles_to_join
 # Join the role information to the main survey dataset
 
