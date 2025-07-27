@@ -128,7 +128,33 @@ if (!is.null(d_data) && nrow(d_data) > 0) {
       "Who is involved in making your" = "Whoisinvolvedinmakingyournitroge",
     )
   
-  
+  client_data_renamed <- client_data %>%
+    rename(
+      "RiskWi$e ID"= "field_1",
+      "What is your first name?"= "field_2", 
+      "What is your last name?" = "field_3",
+      "What is your postcode?" = "field_4", 
+      "What is your email?" = "field_10",
+      "What is your gender?" = "field_9",
+      "Are you a Grower (Land Owner)?" = "Grower_x0028_owner_x0029_",
+      "Are you a Grower (Non Owner)?" = "Grower_x0028_NonlandOwner_x0029_",
+      "Are you an Advisor / Consultant?" = "Advisor",
+      "Do you have other relevant roles?" = "Other",
+      "Please specify your other roles" = "Other_x0028_specify_x0029__x003a",
+      "Which category best describes your farm operations?" = "field_7",
+      "What is the size of dryland area (in ha) that you typically manage?" = "Whatisthesizeofnon_x002d_dryland",
+      "What is the size of Irrigated area (in ha) that you typically manage?" = "WhatisthesizeofirrigatedAreayoum",
+      "What is the size of cropped area (in ha) that you typically manage?" = "field_5",
+      "What is your average Summer rainfall (in mm)?" = "WhatisyouraverageSummerrainfall_",
+      "What is the average winter rainfall (in mm) of cropped area that you typically manage?" = "WhatisyouraverageWinterrainfall_",
+      "What is the average annual rainfall (in mm) of cropped area that you typically manage?" = "field_6",
+      
+      "Highest education attained?" = "Highesteducationattained_x003f_",
+      "Number of years since you started your farming career?" = "Numberofyearssinceyoustartedyour",
+      "Number of full-time equivalent employees (including owner)?" = "Numberoffull_x002d_timeequivalen",
+      "Type of business structure?" = "Typeofbusinessstructure_x003f_"
+      )
+      
   message("✅ All columns successfully renamed.")
   # --- END: COMPLETE COLUMN RENAMING ---
   
@@ -145,17 +171,29 @@ if (!is.null(d_data) && nrow(d_data) > 0) {
     }
   }
   
-  
-  message("Checking for and converting any list-columns client_info...")
-  for (col_name in names(client_data)) {
-      if (is.list(client_data[[col_name]])) {
-        message(paste("Converting list-column:", col_name))
-        client_data[[col_name]] <- sapply(client_data[[col_name]], function(x) {
-          if (is.null(x) || length(x) == 0) return(NA_character_)
-          paste(unlist(x), collapse = "; ")
-        })
-      }
+  # --- START: FIX FOR LIST COLUMNS ---
+  message("Checking for and converting any list-columns in client_data information ...")
+  for (col_name in names(client_data_renamed)) {
+    if (is.list(client_data_renamed[[col_name]])) {
+      message(paste("Converting list-column:", col_name))
+      client_data_renamed[[col_name]] <- sapply(client_data_renamed[[col_name]], function(x) {
+        if (is.null(x) || length(x) == 0) return(NA_character_)
+        paste(unlist(x), collapse = "; ")
+      })
     }
+  }
+  
+  
+  #message("Checking for and converting any list-columns client_info...")
+  #for (col_name in names(client_data)) {
+  #    if (is.list(client_data[[col_name]])) {
+   #     message(paste("Converting list-column:", col_name))
+    #    client_data[[col_name]] <- sapply(client_data[[col_name]], function(x) {
+     #     if (is.null(x) || length(x) == 0) return(NA_character_)
+      #    paste(unlist(x), collapse = "; ")
+       # })
+      #}
+    #}
     
   
   # --- START: SAVE TO CSV ---
@@ -169,7 +207,7 @@ if (!is.null(d_data) && nrow(d_data) > 0) {
   cleint_info <- file.path(output_folder, paste0("client_id_", Sys.Date(), ".csv"))
   # Write the cleaned data to a CSV file
   write.csv(d_data_renamed, file_name, row.names = FALSE, na = "")
-  write.csv(client_data, cleint_info, row.names = FALSE, na = "")
+  write.csv(client_data_renamed, cleint_info, row.names = FALSE, na = "")
   
   message(paste("✅ Success! Data saved to:", file_name))
   
