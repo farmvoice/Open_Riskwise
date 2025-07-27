@@ -252,13 +252,13 @@ colnames(raw_data) <- cleaned_colnames
 print(colnames(raw_data))
 
 # Display the first few rows of the data with the new column names
-head(raw_data)
+#head(raw_data)
 
 # --- Save the result ---
 # Save the data with renamed columns to a new CSV file
 file_name_cleaned <- file.path(output_folder, paste0("cleaned_sharepoint_data_", Sys.Date(), ".csv"))
 # Write the cleaned data to a CSV file
-write.csv(d_data_renamed, file_name_cleaned, row.names = FALSE, na = "")
+write.csv(raw_data, file_name_cleaned, row.names = FALSE, na = "")
 
 
 #=================================================================================================
@@ -287,7 +287,7 @@ client_data_with_roles <- survey_client_id %>%
 # Select and prepare the role data for joining
 roles_to_join <- client_data_with_roles %>%
   select(clientid = `RiskWi$e ID`, role)
-#select(ClientID = `RiskWi$e ID`, role)
+  #select(ClientID = `RiskWi$e ID`, role)
 roles_to_join
 # Join the role information to the main survey dataset
 
@@ -309,6 +309,8 @@ message(paste("Number of rows after removing duplicates:", nrow(survey_data)))
 # --- A: Prepare "Decision Ranking" Data ---
 # Define the valid levels first to avoid repeating them and ensure consistency
 difficulty_levels_vector <- c("Not Difficult", "Somewhat Difficult", "Very Difficult")
+
+survey_data
 
 decision_ranking_long <- survey_data %>%
   select(clientid,
