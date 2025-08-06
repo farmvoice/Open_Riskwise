@@ -79,7 +79,7 @@ pull_sharepoint_data <- function() {
       tenant = tenant,
       app = app_id,
       password = app_secret,
-      auth_type = "client_credentials" # Specify the non-interactive flow
+      auth_type = "client_credentials", # Specify the non-interactive flow
       scopes = "https://graph.microsoft.com/.default" # This is the required scope for this auth type
     )
     #     
