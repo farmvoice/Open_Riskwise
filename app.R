@@ -13,16 +13,305 @@ library(ggrepel)
 library(scales)
 
 
+# Install necessary libraries if you haven't already
+if (!require(Microsoft365R)) install.packages("Microsoft365R")
+if (!require(dplyr)) install.packages("dplyr")
+if (!require(readr)) install.packages("readr")
+
+library(Microsoft365R)
+library(AzureAuth)
+library(AzureGraph)
+library(dplyr)
+library(DT)
+library(readr)
+
+
+library(stringr)
+
 
 # =================================================================
-# 2. Load and Prepare Data
+# 2. pull/download from sharepoint and Prepare Data
+# =================================================================
+
+#--------------------------------------------------------------------------------
+#Commented Section For Brandon to access information for 
+#For the server-server communication without user interaction (server-to-server authentication method) 
+#--------------------------------------------------------------------------------
+# =================================================================
+# 2. pull/download from sharepoint and Prepare Data server-server communication
+# =================================================================
+pull_sharepoint_data <- function() {
+  # --- Non-Interactive Authentication for Shiny App Deployment ---
+  # In a server environment like Posit Connect, interactive browser-based
+  # login is not possible. We use a service principal (app registration)
+  # with client credentials for non-interactive authentication.
+  #
+  #   # IMPORTANT: Store these credentials as environment variables in your
+  #   # deployment environment (e.g., Posit Connect). Do NOT hardcode them.
+  #   # You will need to set the following variables in your Posit Connect dashboard's
+  #   # 'Vars' tab:
+  # - AZURE_TENANT_ID: Your Azure Active Directory Tenant ID
+  # - AZURE_CLIENT_ID: The Application (client) ID for your app registration
+  # - AZURE_CLIENT_SECRET: The client secret for your app registration
+  
+  tenant <- Sys.getenv("AZURE_TENANT_ID")
+  app_id <- Sys.getenv("AZURE_CLIENT_ID")
+  app_secret <- Sys.getenv("AZURE_CLIENT_SECRET")
+  
+  # 1. SharePoint Site URL
+  sharepoint_site_url <- "https://farmvoice.sharepoint.com"
+  
+  # 2. The display name of your SharePoint List
+  sharepoint_list_name <- "New Question type"
+  sharepoint_list_name_client_id <- "Client ID"
+  #   
+  tryCatch({
+    # Check if environment variables are set
+    if (tenant == "" || app_id == "" || app_secret == "") {
+      stop("Authentication Error: One or more environment variables (AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET) are not set in the deployment environment.")
+    }
+    #     
+    message("Attempting to connect to SharePoint site using client credentials...")
+    #     
+    #     # Authenticate non-interactively and get the SharePoint site
+    sharepoint_site <- get_sharepoint_site(
+      site_url = sharepoint_site_url,
+      tenant = tenant,
+      app = app_id,
+      password = app_secret,
+      auth_type = "client_credentials" # Specify the non-interactive flow
+    )
+    #     
+    message("✅ Successfully connected to site.")
+    #     
+    sharepoint_list <- sharepoint_site$get_list(sharepoint_list_name)
+    sharepoint_list2 <- sharepoint_site$get_list(sharepoint_list_name_client_id)
+    message("Fetching list items...")
+    #     
+    #     # Pull data
+    d_data <- sharepoint_list$list_items()
+    client_data <- sharepoint_list2$list_items()
+    message("✅ Data pull successful.")
+    
+    return(list(survey_data = d_data, client_info = client_data))
+    #     
+  }, error = function(e) {
+    message("❌ An error occurred during SharePoint connection or data pull:")
+    message(e)
+    return(NULL)
+  })
+}
+# 
+#-------------------------------------------------------------------------
+# End of commented section for Brendon to look fro
+#----------------------------------------------------------------------------
+
+
+sharepoint_output <- pull_sharepoint_data()
+
+# FIX 3: Extract the data frames from the list into separate variables
+# Check if the function ran successfully before trying to extract data
+if (!is.null(sharepoint_output)) {
+  d_data <- sharepoint_output$survey_data
+  client_data <- sharepoint_output$client_info
+  message("Data frames 'd_data' and 'client_data' have been created.")
+}
+
+# --- Main Script Body ---
+if (!is.null(d_data) && nrow(d_data) > 0) {
+  
+  # --- ✅ START: COMPLETE COLUMN RENAMING ---
+  message("Renaming columns...")
+  
+  # This block maps the ugly internal SharePoint names to your desired clean names.
+  d_data_renamed <- d_data %>%
+    rename(
+      "ClientID"= "field_1",
+      "How difficult do you find making decisions about nitrogen application (amount / type / timing)?"= "field_2",
+      "How difficult do you find making decisions about buying major new machinery / infrastructure?"= "field_3",
+      "How difficult do you find making decisions about land purchase and leasing?" ="field_4",
+      "How difficult do you find making decisions about preventative fungicide spraying?" = "field_5",
+      "How difficult do you find making decisions about livestock (type / stocking rate / etc)?"=  "field_6",
+      "How difficult do you find making decisions about crop choice (type / mix / fallowing etc)?" = "field_7",
+      "How difficult do you find making decisions about pre emergent herbicides?"= "field_8",
+      "How difficult do you find making decisions about sowing timing?" = "field_9",
+      "How difficult do you find making decisions about varietal choice?" = "field_10",
+      "How difficult do you find making decisions about input purchasing timing?" = "field_11",
+      "How difficult do you find making decisions about marketing (grain sales and contracts)?"= "MarketingStrategies_x0028_Grains",
+      "How difficult do you find making decisions about water buying and use?" ="HowdifficultdoyoufindmakingWater",
+      "How difficult do you find making decisions about soil health management?" = "field_13",
+      "How difficult do you find making decisions about succession planning?" = "field_14",
+      "How difficult do you find making decisions about net zero adaptation?" = "field_15",
+      "How difficult do you find making decisions about stored soil water?" = "field_16",
+      "How difficult do you find making decisions about sodicity management?" = "field_17",
+      "How difficult do you find making decisions about deep P application?" ="field_18",
+      "What other risky decisions you have difficulty with?" = "field_19",
+      "What should RiskWi$e focus on to help growers make better farm decisions?" = "WhatshouldRiskWi_x0024_efocusont",
+      "What areas in your decision making would you like to improve?" = "Whatareasinyourdecisionmakingwou",
+      "Which region are your farming activities based?"= "Whichregionareyourfarmingactivit",
+      "Which group are you associated with?" = "Whichgroupareyouassociatedwith_x",
+      "Which Risky Decision is today's event discussing (Facilitator will advise)." = "WhichRiskyDecisionistodayseventd",
+      "Which of the following crop management decisions do you have most difficulty in assessing for risk?" ="Whichofthefollowingcropmanagemen",
+      "Selected Risk Decision"= "SelectedRiskDecision",
+      "What is your risk attitude when making"= "_x005b_Question2_x005d_Whatisyou",
+      "What balance guides you between intuition (gut-feel informed by past experience) and numerical calculation (data-driven) when making a" = "_x005b_Question3_x005d_Whatbalan",
+      "How comfortable are you with your decision process (not outcome) when making current" = "_x005b_Question4_x005d_Howcomfor",
+      "Have you undertaken any review of how you made your last" = "_x005b_Question5_x005d_Haveyouun",
+      "Advisor/ Consultant (Agronomy)" = "Advisor_x002f_Consultant_x0028_A",
+      "Farm Business Advisor / Consultant" = "FarmBusinessAdvisor_x002f_Consul",
+      "Decision Support Tools (e.g. software / spreadsheets etc.)" = "DecisionSupportTools_x0028_e_x00",
+      "Other Growers" = "OtherGrowers",
+      "other" = "other",
+      "What balance do you believe an Advisor/ Consultant is guided by when advising on" = "_x005b_Question7_x005d_Whatbalan",
+      "What balance do you take between production or profitability expectations when making"= "_x005b_Question8_x005d_Whatbalan",
+      "Which statement best describes how you approach your" = "_x005b_Question9_x005d_Whichstat",
+      "Who is involved in making your" = "Whoisinvolvedinmakingyournitroge",
+    )
+  
+  client_data_renamed <- client_data %>%
+    rename(
+      "RiskWi$e ID"= "field_1",
+      "What is your first name?"= "field_2", 
+      "What is your last name?" = "field_3",
+      "What is your postcode?" = "field_4", 
+      "What is your email?" = "field_10",
+      "What is your gender?" = "field_9",
+      "Are you a Grower (Land Owner)?" = "Grower_x0028_owner_x0029_",
+      "Are you a Grower (Non Owner)?" = "Grower_x0028_NonlandOwner_x0029_",
+      "Are you an Advisor / Consultant?" = "Advisor",
+      "Do you have other relevant roles?" = "Other",
+      "Please specify your other roles" = "Other_x0028_specify_x0029__x003a",
+      "Which category best describes your farm operations?" = "field_7",
+      "What is the size of dryland area (in ha) that you typically manage?" = "Whatisthesizeofnon_x002d_dryland",
+      "What is the size of Irrigated area (in ha) that you typically manage?" = "WhatisthesizeofirrigatedAreayoum",
+      "What is the size of cropped area (in ha) that you typically manage?" = "field_5",
+      "What is your average Summer rainfall (in mm)?" = "WhatisyouraverageSummerrainfall_",
+      "What is the average winter rainfall (in mm) of cropped area that you typically manage?" = "WhatisyouraverageWinterrainfall_",
+      "What is the average annual rainfall (in mm) of cropped area that you typically manage?" = "field_6",
+      
+      "Highest education attained?" = "Highesteducationattained_x003f_",
+      "Number of years since you started your farming career?" = "Numberofyearssinceyoustartedyour",
+      "Number of full-time equivalent employees (including owner)?" = "Numberoffull_x002d_timeequivalen",
+      "Type of business structure?" = "Typeofbusinessstructure_x003f_"
+    )
+  
+  message("✅ All columns successfully renamed.")
+  # --- END: COMPLETE COLUMN RENAMING ---
+  
+  
+  # --- START: FIX FOR LIST COLUMNS ---
+  message("Checking for and converting any list-columns...")
+  for (col_name in names(d_data_renamed)) {
+    if (is.list(d_data_renamed[[col_name]])) {
+      message(paste("Converting list-column:", col_name))
+      d_data_renamed[[col_name]] <- sapply(d_data_renamed[[col_name]], function(x) {
+        if (is.null(x) || length(x) == 0) return(NA_character_)
+        paste(unlist(x), collapse = "; ")
+      })
+    }
+  }
+  
+  # --- START: FIX FOR LIST COLUMNS ---
+  message("Checking for and converting any list-columns in client_data information ...")
+  for (col_name in names(client_data_renamed)) {
+    if (is.list(client_data_renamed[[col_name]])) {
+      message(paste("Converting list-column:", col_name))
+      client_data_renamed[[col_name]] <- sapply(client_data_renamed[[col_name]], function(x) {
+        if (is.null(x) || length(x) == 0) return(NA_character_)
+        paste(unlist(x), collapse = "; ")
+      })
+    }
+  }
+  
+  
+  #message("Checking for and converting any list-columns client_info...")
+  #for (col_name in names(client_data)) {
+  #    if (is.list(client_data[[col_name]])) {
+  #     message(paste("Converting list-column:", col_name))
+  #    client_data[[col_name]] <- sapply(client_data[[col_name]], function(x) {
+  #     if (is.null(x) || length(x) == 0) return(NA_character_)
+  #    paste(unlist(x), collapse = "; ")
+  # })
+  #}
+  #}
+  
+  
+  # --- START: SAVE TO CSV ---
+  output_folder <- "SharePoint_Data"
+  if (!dir.exists(output_folder)) {
+    dir.create(output_folder)
+    message(paste("📁 Created folder:", output_folder))
+  }
+  
+  file_name <- file.path(output_folder, paste0("sharepoint_data_", Sys.Date(), ".csv"))
+  cleint_info <- file.path(output_folder, paste0("client_id_", Sys.Date(), ".csv"))
+  # Write the cleaned data to a CSV file
+  write.csv(d_data_renamed, file_name, row.names = FALSE, na = "")
+  write.csv(client_data_renamed, cleint_info, row.names = FALSE, na = "")
+  
+  message(paste("✅ Success! Data saved to:", file_name))
+  
+  
+  
+} else {
+  message("❌ Data pull was unsuccessful or returned no data. File not saved.")
+}
+
+
+
+
+# =================================================================
+# 2. Load recently created data and Prepare Data
 # =================================================================
 # Load base survey data and client identifier data
 # Please ensure these file paths are correct for your environment
+
+# Read the dataset
+#raw_data <- read_csv("Riskwise_data/New_Question_type_raw.csv")
+
+raw_data <- read_csv(file_name, show_col_types = FALSE)
+# Get the original column names
+original_colnames <- colnames(raw_data)
+
+# Clean the column names
+# 1. Convert to lowercase
+# 2. Replace all non-alphanumeric characters with an underscore
+# 3. Replace multiple consecutive underscores with a single one
+# 4. Remove any trailing underscores
+cleaned_colnames <- original_colnames %>%
+  str_to_lower() %>%
+  str_replace_all("[^a-z0-9]+", "_") %>%
+  str_replace_all("_+", "_") %>%
+  str_remove("_$")
+
+# Assign the new, cleaned column names to the data frame
+colnames(raw_data) <- cleaned_colnames
+
+# --- Verification ---
+# Print the new column names to verify the changes
+print(colnames(raw_data))
+
+# Display the first few rows of the data with the new column names
+#head(raw_data)
+
+# --- Save the result ---
+# Save the data with renamed columns to a new CSV file
+file_name_cleaned <- file.path(output_folder, paste0("cleaned_sharepoint_data_", Sys.Date(), ".csv"))
+# Write the cleaned data to a CSV file
+write.csv(raw_data, file_name_cleaned, row.names = FALSE, na = "")
+
+
+#=================================================================================================
+#Now comes to Next part of Dataset Prepration
+#==================================================================================================
+
 #survey_data <- read_csv("Riskwise_data/cleaned_New_Question_type_raw.csv", show_col_types = FALSE)
 
-survey_data <- read_csv("Riskwise_data/cleaned_sharepoint_data_2025-07-25.csv", show_col_types = FALSE)
-survey_client_id <- read_csv("Riskwise_data/Client_id_B.csv", show_col_types = FALSE)
+#survey_data <- read_csv("Riskwise_data/cleaned_sharepoint_data_2025-07-25.csv", show_col_types = FALSE)
+survey_data <- read_csv(file_name_cleaned, show_col_types = FALSE)
+
+#survey_client_id <- read_csv("Riskwise_data/Client_id_B.csv", show_col_types = FALSE)
+survey_client_id <- read_csv(cleint_info, show_col_types = FALSE)
 
 # Add the 'role' Column based on client responses
 client_data_with_roles <- survey_client_id %>%
@@ -60,6 +349,8 @@ message(paste("Number of rows after removing duplicates:", nrow(survey_data)))
 # --- A: Prepare "Decision Ranking" Data ---
 # Define the valid levels first to avoid repeating them and ensure consistency
 difficulty_levels_vector <- c("Not Difficult", "Somewhat Difficult", "Very Difficult")
+
+survey_data
 
 decision_ranking_long <- survey_data %>%
   select(clientid,

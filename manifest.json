@@ -2824,10 +2824,10 @@
   },
   "files": {
     ".RData": {
-      "checksum": "441bad75504ec1290a98a9f4c7ec4aad"
+      "checksum": "6a9d653dff36db4fd675d78085d2079a"
     },
     "app.R": {
-      "checksum": "f65dbac5fe1af7cbf16edec86ad00f0c"
+      "checksum": "43e3b328ac063ee6d702a01ef5a6d0c0"
     },
     "Automatic_connection_to_sharepoint_list.R": {
       "checksum": "a3743ef4c28904ffd197df1946e0253c"
@@ -2845,7 +2845,7 @@
       "checksum": "b5ad64356b8b9048d8c176e67375a9c8"
     },
     "Everything_at_One.R": {
-      "checksum": "9ef4be4407c77bf9b2df5575418abe8e"
+      "checksum": "79ccf0bf64a5d3c85539d3601d32870d"
     },
     "LICENSE": {
       "checksum": "86d3f3a95c324c9479bd8986968f4327"
@@ -2904,6 +2904,9 @@
     "SharePoint_Data/sharepoint_data_2025-07-27.csv": {
       "checksum": "4422b9fc5fe5bc33054526a3f895c24c"
     },
+    "task_for_brenden_to_do.docx": {
+      "checksum": "a3475b5b9c2d3f0e1614e0f19ca9ba2f"
+    },
     "version 10_fixed_graphand_decsion_sorted.R": {
       "checksum": "c60b56adee000d4386f624581737833a"
     },
@@ -2915,6 +2918,9 @@
     },
     "version_13_changes_for_summary_bo_ui.R": {
       "checksum": "bcf6cc478caddc91ce84b3473fad02cd"
+    },
+    "without_auto_app.R": {
+      "checksum": "368e1d13d6808ff8a77254356bfd9a24"
     }
   },
   "users": null
