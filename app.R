@@ -528,6 +528,29 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   
   difficulty_colors <- c("Not Difficult" = "#2ca02c", "Somewhat Difficult" = "#ffbb78", "Very Difficult" = "#d62728")
+  metric_definitions <- list(
+    risk_attitude = list(
+      labels = c("Very Risk Avoidant", "Risk Avoidant", "Neutral", "Risk Tolerant", "Very Risk Tolerant"),
+      breaks = c(-1, 1, 3, 6, 8, 10) # Upper bound of each score range
+    ),
+    intuition_vs_data = list(
+      labels = c("Mainly Intuition", "Leans Intuition", "Balanced", "Leans Data", "Mainly Data"),
+      breaks = c(-1, 1, 3, 6, 8, 10)
+    ),
+    comfort_with_process = list(
+      labels = c("Very Uncomfortable", "Uncomfortable", "Neutral", "Comfortable", "Very Comfortable"),
+      breaks = c(-1, 1, 3, 6, 8, 10)
+    ),
+    production_vs_profit = list(
+      labels = c("Focus on Production", "Leans Production", "Balanced", "Leans Profit", "Focus on Profit"),
+      breaks = c(-1, 1, 3, 6, 8, 10)
+    ),
+    advisor_balance = list(
+      labels = c("Advisor: Intuition", "Advisor: Leans Int.", "Advisor: Balanced", "Advisor: Leans Data", "Advisor: Data"),
+      breaks = c(-1, 1, 3, 6, 8, 10)
+    )
+  )
+  
   
   create_decision_ranking_plot <- function(data, colors) {
     if(is.null(data) || nrow(data) == 0) {
@@ -681,38 +704,96 @@ server <- function(input, output, session) {
     div(p(strong("Your ID:"), br(), input$client_selector), p(strong("My Response:"), br(), paste0("'", response_text, "'")))
   })
   
-  get_summary_stats <- function(df) {
-    risk_data <- df %>% filter(!is.na(risk_attitude))
-    if(nrow(risk_data) == 0) return(NULL)
+  # get_summary_stats <- function(df) {
+  #   risk_data <- df %>% filter(!is.na(risk_attitude))
+  #   if(nrow(risk_data) == 0) return(NULL)
+  #   
+  #   category_order <- c("Very Risk Avoidant", "Risk Avoidant", "Neutral", "Risk Tolerant", "Very Risk Tolerant")
+  #   
+  #   risk_data %>%
+  #     mutate(category = factor(case_when(
+  #       risk_attitude <= 1 ~ "Very Risk Avoidant",
+  #       risk_attitude <= 3 ~ "Risk Avoidant",
+  #       risk_attitude <= 6 ~ "Neutral",
+  #       risk_attitude <= 8 ~ "Risk Tolerant",
+  #       TRUE ~ "Very Risk Tolerant"
+  #     ), levels = category_order)) %>%
+  #     count(category, .drop = FALSE) %>%
+  #     mutate(percentage = round(n / sum(n) * 100))
+  # }
+  
+  # +++ NEW: Generic function to calculate summary stats for any 0-10 metric +++
+  get_generic_summary_stats <- function(df, metric_name) {
+    # Ensure the metric has a definition
+    if (!metric_name %in% names(metric_definitions)) return(NULL)
     
-    category_order <- c("Very Risk Avoidant", "Risk Avoidant", "Neutral", "Risk Tolerant", "Very Risk Tolerant")
+    # Get the definitions for the selected metric
+    definitions <- metric_definitions[[metric_name]]
     
-    risk_data %>%
-      mutate(category = factor(case_when(
-        risk_attitude <= 1 ~ "Very Risk Avoidant",
-        risk_attitude <= 3 ~ "Risk Avoidant",
-        risk_attitude <= 6 ~ "Neutral",
-        risk_attitude <= 8 ~ "Risk Tolerant",
-        TRUE ~ "Very Risk Tolerant"
-      ), levels = category_order)) %>%
+    metric_data <- df %>% filter(!is.na(.data[[metric_name]]))
+    if(nrow(metric_data) == 0) return(NULL)
+    
+    # Use cut() to create categories based on the breaks and labels
+    summary_data <- metric_data %>%
+      mutate(category = cut(
+        .data[[metric_name]],
+        breaks = definitions$breaks,
+        labels = definitions$labels,
+        right = TRUE,
+        include.lowest = TRUE
+      )) %>%
       count(category, .drop = FALSE) %>%
       mutate(percentage = round(n / sum(n) * 100))
+    
+    return(summary_data)
   }
   
+  # create_summary_box_ui <- function(summary_stats, title) {
+  #   if (is.null(summary_stats)) {
+  #     return(wellPanel(h4(title, align = "center"), hr(), p("No data available for the selected filters.")))
+  #   }
+  #   
+  #   category_order <- c("Very Risk Avoidant", "Risk Avoidant", "Neutral", "Risk Tolerant", "Very Risk Tolerant")
+  #   
+  #   summary_cols <- lapply(category_order, function(cat) {
+  #     percent_val <- summary_stats$percentage[summary_stats$category == cat]
+  #     
+  #     column(
+  #       2,
+  #       style = "border:1px solid #ddd; text-align:center; padding:5px; margin:0 5px;",
+  #       tags$b(cat),
+  #       tags$p(paste0(percent_val, "%"))
+  #     )
+  #   })
+  #   
+  #   wellPanel(
+  #     h4(title, align = "center"),
+  #     hr(),
+  #     fluidRow(column(1), summary_cols)
+  #   )
+  # }
+  
+  # +++ UPDATED: UI function now adapts to any number of categories +++
   create_summary_box_ui <- function(summary_stats, title) {
-    if (is.null(summary_stats)) {
+    if (is.null(summary_stats) || nrow(summary_stats) == 0) {
       return(wellPanel(h4(title, align = "center"), hr(), p("No data available for the selected filters.")))
     }
     
-    category_order <- c("Very Risk Avoidant", "Risk Avoidant", "Neutral", "Risk Tolerant", "Very Risk Tolerant")
+    # Get the category order directly from the factor levels
+    category_order <- levels(summary_stats$category)
     
     summary_cols <- lapply(category_order, function(cat) {
       percent_val <- summary_stats$percentage[summary_stats$category == cat]
+      # Handle cases where a category might have 0% and not appear in the count
+      percent_val <- ifelse(length(percent_val) == 0, 0, percent_val)
+      
+      # Dynamically adjust column width based on the number of categories
+      col_width <- floor(10 / length(category_order))
       
       column(
-        2,
+        width = col_width,
         style = "border:1px solid #ddd; text-align:center; padding:5px; margin:0 5px;",
-        tags$b(cat),
+        tags$b(str_wrap(cat, width = 15)), # Wrap long text
         tags$p(paste0(percent_val, "%"))
       )
     })
@@ -724,17 +805,40 @@ server <- function(input, output, session) {
     )
   }
   
+  # output$summary_output_ui <- renderUI({
+  #   req(input$variable_selector == "Risk Attitude")
+  #   
+  #   if (input$compare_mode == "single") {
+  #     stats <- get_summary_stats(filtered_data(1))
+  #     ui <- create_summary_box_ui(stats, title = paste("Summary for", population_names()$pop1))
+  #     fluidRow(column(12, ui))
+  #     
+  #   } else if (input$compare_mode == "compare_two") {
+  #     stats1 <- get_summary_stats(filtered_data(1))
+  #     stats2 <- get_summary_stats(filtered_data(2))
+  #     
+  #     div(
+  #       create_summary_box_ui(stats1, title = population_names()$pop1),
+  #       create_summary_box_ui(stats2, title = population_names()$pop2)
+  #     )
+  #   }
+  # })
+  # +++ UPDATED: The main controller for showing the summary tables +++
   output$summary_output_ui <- renderUI({
-    req(input$variable_selector == "Risk Attitude")
+    selected_var_name <- plot_vars[input$variable_selector]
     
-    if (input$compare_mode == "single") {
-      stats <- get_summary_stats(filtered_data(1))
-      ui <- create_summary_box_ui(stats, title = paste("Summary for", population_names()$pop1))
+    # Only show the summary UI if the selected metric is in our definitions
+    req(selected_var_name %in% names(metric_definitions))
+    
+    if (input$compare_mode == "single" || input$compare_mode == "compare_me") {
+      stats <- get_generic_summary_stats(filtered_data(1), selected_var_name)
+      title <- paste("Summary for", population_names()$pop1)
+      ui <- create_summary_box_ui(stats, title = title)
       fluidRow(column(12, ui))
       
     } else if (input$compare_mode == "compare_two") {
-      stats1 <- get_summary_stats(filtered_data(1))
-      stats2 <- get_summary_stats(filtered_data(2))
+      stats1 <- get_generic_summary_stats(filtered_data(1), selected_var_name)
+      stats2 <- get_generic_summary_stats(filtered_data(2), selected_var_name)
       
       div(
         create_summary_box_ui(stats1, title = population_names()$pop1),
