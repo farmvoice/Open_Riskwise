@@ -234,16 +234,40 @@ ui <- fluidPage(
 # 4. Define the Server Logic
 # =================================================================
 server <- function(input, output, session) {
-  
+
   difficulty_colors <- c("Not Difficult" = "#2ca02c", "Somewhat Difficult" = "#ffbb78", "Very Difficult" = "#d62728")
-  
+
+  metric_definitions <- list(
+    risk_attitude = list(
+      labels = c("Very Risk Avoidant", "Risk Avoidant", "Neutral", "Risk Tolerant", "Very Risk Tolerant"),
+      breaks = c(-1, 1, 3, 6, 8, 10) # Upper bound of each score range
+    ),
+    intuition_vs_data = list(
+      labels = c("Mainly Intuition", "Leans Intuition", "Balanced", "Leans Data", "Mainly Data"),
+      breaks = c(-1, 1, 3, 6, 8, 10)
+    ),
+    comfort_with_process = list(
+      labels = c("Very Uncomfortable", "Uncomfortable", "Neutral", "Comfortable", "Very Comfortable"),
+      breaks = c(-1, 1, 3, 6, 8, 10)
+    ),
+    production_vs_profit = list(
+      labels = c("Focus on Production", "Leans Production", "Balanced", "Leans Profit", "Focus on Profit"),
+      breaks = c(-1, 1, 3, 6, 8, 10)
+    ),
+    advisor_balance = list(
+      labels = c("Advisor: Intuition", "Advisor: Leans Int.", "Advisor: Balanced", "Advisor: Leans Data", "Advisor: Data"),
+      breaks = c(-1, 1, 3, 6, 8, 10)
+    )
+  )
+
+
   create_decision_ranking_plot <- function(data, colors) {
     if(is.null(data) || nrow(data) == 0) {
       return(ggplot() +
                annotate("text", x = 0.5, y = 0.5, label = "No ranking data available for the selected filters.", size = 6) +
                theme_void())
     }
-    
+
     summary_ranking <- data %>%
       count(decision_name, difficulty_level, .drop = FALSE) %>%
       group_by(decision_name) %>%
@@ -254,7 +278,7 @@ server <- function(input, output, session) {
       mutate(sort_metric = sum(percentage[difficulty_level == "Very Difficult"])) %>%
       ungroup() %>%
       mutate(decision_name = fct_reorder(decision_name, sort_metric))
-    
+
     ggplot(summary_ranking, aes(y = decision_name, x = percentage, fill = difficulty_level)) +
       geom_col() +
       scale_x_continuous(labels = scales::percent, expand = c(0, 0.01)) +
@@ -271,7 +295,7 @@ server <- function(input, output, session) {
         axis.text.y = element_text(size = 12, face = "bold")
       )
   }
-  
+
   observeEvent(input$region_filter1, {
     selected_region <- input$region_filter1
     if (selected_region == "All Regions") {
@@ -281,7 +305,7 @@ server <- function(input, output, session) {
     }
     updateSelectInput(session, "group_filter1", choices = choices)
   })
-  
+
   observeEvent(input$region_filter2, {
     selected_region <- input$region_filter2
     if (selected_region == "All Regions") {
@@ -291,21 +315,21 @@ server <- function(input, output, session) {
     }
     updateSelectInput(session, "group_filter2", choices = choices)
   })
-  
+
   observeEvent(input$variable_selector, {
     if (input$variable_selector == "Decision Ranking") {
       updateSelectInput(session, "compare_mode", selected = "single")
     }
   }, ignoreInit = TRUE)
-  
+
   filtered_data <- function(pop_num = 1) {
     role_filter      <- if(pop_num == 1) input$role_filter1 else input$role_filter2
     region_filter    <- if(pop_num == 1) input$region_filter1 else input$region_filter2
     group_filter     <- if(pop_num == 1) input$group_filter1 else input$group_filter2
     decision_filter <- if(pop_num == 1) input$decision_filter1 else input$decision_filter2
-    
+
     data <- switch(input$variable_selector, "Decision Ranking" = decision_ranking_long, "Review Process" = review_process_df, risk_attitude_df)
-    
+
     if (!is.null(role_filter) && role_filter != "All Roles") {
       data <- data %>% filter(role == role_filter)
     }
@@ -318,16 +342,16 @@ server <- function(input, output, session) {
     if (!is.null(decision_filter) && !input$variable_selector %in% c("Decision Ranking", "Review Process") && decision_filter != "All Decisions") {
       data <- data %>% filter(risk_decision == decision_filter)
     }
-    
+
     return(data)
   }
-  
+
   selected_user_data <- reactive({
     req(input$compare_mode == "compare_me", input$client_selector)
     df <- if (input$variable_selector == "Review Process") review_process_df else risk_attitude_df
     df %>% filter(clientid == input$client_selector)
   })
-  
+
   plot_population_sizes <- reactive({
     get_size <- function(data_df) {
       if (is.null(data_df) || nrow(data_df) == 0 || !"clientid" %in% names(data_df)) {
@@ -335,10 +359,10 @@ server <- function(input, output, session) {
       }
       return(n_distinct(data_df$clientid))
     }
-    
+
     pop1_data <- filtered_data(1)
     pop1_size <- get_size(pop1_data)
-    
+
     pop2_size <- NULL
     if (input$compare_mode == "compare_two") {
       pop2_data <- filtered_data(2)
@@ -346,35 +370,38 @@ server <- function(input, output, session) {
     }
     list(pop1_size = pop1_size, pop2_size = pop2_size)
   })
-  
+
   population_names <- reactive({
     get_pop_name <- function(num) {
       region <- input[[paste0("region_filter", num)]]
       group <- input[[paste0("group_filter", num)]]
-      
+
       if (!is.null(group) && group != "All Groups") { return(group) }
       if (!is.null(region) && region != "All Regions") { return(region) }
       return(paste("Population", num))
     }
-    
+
     list(
       pop1 = get_pop_name(1),
       pop2 = if (input$compare_mode == "compare_two") get_pop_name(2) else NULL
     )
   })
-  
+
+
+
+
   output$pop1_filter_header <- renderUI({
     req(population_names()$pop1)
     title <- paste0(population_names()$pop1, " (n=", plot_population_sizes()$pop1_size, ")")
     h4(title, align = "center")
   })
-  
+
   output$pop2_filter_header <- renderUI({
     req(input$compare_mode == 'compare_two', population_names()$pop2)
     title <- paste0(population_names()$pop2, " (n=", plot_population_sizes()$pop2_size, ")")
     h4(title, align="center")
   })
-  
+
   output$user_response_text_ui <- renderUI({
     req(input$compare_mode == 'compare_me')
     user_data <- selected_user_data()
@@ -388,79 +415,201 @@ server <- function(input, output, session) {
     if (is.na(response_text)) return(p("No response recorded."))
     div(p(strong("Your ID:"), br(), input$client_selector), p(strong("My Response:"), br(), paste0("'", response_text, "'")))
   })
-  
-  get_summary_stats <- function(df) {
-    risk_data <- df %>% filter(!is.na(risk_attitude))
-    if(nrow(risk_data) == 0) return(NULL)
-    
-    category_order <- c("Very Risk Avoidant", "Risk Avoidant", "Neutral", "Risk Tolerant", "Very Risk Tolerant")
-    
-    risk_data %>%
-      mutate(category = factor(case_when(
-        risk_attitude <= 1 ~ "Very Risk Avoidant",
-        risk_attitude <= 3 ~ "Risk Avoidant",
-        risk_attitude <= 6 ~ "Neutral",
-        risk_attitude <= 8 ~ "Risk Tolerant",
-        TRUE ~ "Very Risk Tolerant"
-      ), levels = category_order)) %>%
+
+  # get_summary_stats <- function(df) {
+  #   risk_data <- df %>% filter(!is.na(risk_attitude))
+  #   if(nrow(risk_data) == 0) return(NULL)
+  #
+  #   category_order <- c("Very Risk Avoidant", "Risk Avoidant", "Neutral", "Risk Tolerant", "Very Risk Tolerant")
+  #
+  #   risk_data %>%
+  #     mutate(category = factor(case_when(
+  #       risk_attitude <= 1 ~ "Very Risk Avoidant",
+  #       risk_attitude <= 3 ~ "Risk Avoidant",
+  #       risk_attitude <= 6 ~ "Neutral",
+  #       risk_attitude <= 8 ~ "Risk Tolerant",
+  #       TRUE ~ "Very Risk Tolerant"
+  #     ), levels = category_order)) %>%
+  #     count(category, .drop = FALSE) %>%
+  #     mutate(percentage = round(n / sum(n) * 100))
+  # }
+
+
+  # +++ NEW: Generic function to calculate summary stats for any 0-10 metric +++
+  get_generic_summary_stats <- function(df, metric_name) {
+    # Ensure the metric has a definition
+    if (!metric_name %in% names(metric_definitions)) return(NULL)
+
+    # Get the definitions for the selected metric
+    definitions <- metric_definitions[[metric_name]]
+
+    metric_data <- df %>% filter(!is.na(.data[[metric_name]]))
+    if(nrow(metric_data) == 0) return(NULL)
+
+    # Use cut() to create categories based on the breaks and labels
+    summary_data <- metric_data %>%
+      mutate(category = cut(
+        .data[[metric_name]],
+        breaks = definitions$breaks,
+        labels = definitions$labels,
+        right = TRUE,
+        include.lowest = TRUE
+      )) %>%
       count(category, .drop = FALSE) %>%
       mutate(percentage = round(n / sum(n) * 100))
+
+    return(summary_data)
   }
-  
+
+  # create_summary_box_ui <- function(summary_stats, title) {
+  #   if (is.null(summary_stats)) {
+  #     return(wellPanel(h4(title, align = "center"), hr(), p("No data available for the selected filters.")))
+  #   }
+  #
+  #   category_order <- c("Very Risk Avoidant", "Risk Avoidant", "Neutral", "Risk Tolerant", "Very Risk Tolerant")
+  #
+  #   summary_cols <- lapply(category_order, function(cat) {
+  #     percent_val <- summary_stats$percentage[summary_stats$category == cat]
+  #
+  #     column(
+  #       2,
+  #       style = "border:1px solid #ddd; text-align:center; padding:5px; margin:0 5px;",
+  #       tags$b(cat),
+  #       tags$p(paste0(percent_val, "%"))
+  #     )
+  #   })
+  #
+  #   wellPanel(
+  #     h4(title, align = "center"),
+  #     hr(),
+  #     fluidRow(column(1), summary_cols)
+  #   )
+  # }
+
+  # +++ UPDATED: UI function now adapts to any number of categories +++
   create_summary_box_ui <- function(summary_stats, title) {
-    if (is.null(summary_stats)) {
+    if (is.null(summary_stats) || nrow(summary_stats) == 0) {
       return(wellPanel(h4(title, align = "center"), hr(), p("No data available for the selected filters.")))
     }
-    
-    category_order <- c("Very Risk Avoidant", "Risk Avoidant", "Neutral", "Risk Tolerant", "Very Risk Tolerant")
-    
+
+    # Get the category order directly from the factor levels
+    category_order <- levels(summary_stats$category)
+
     summary_cols <- lapply(category_order, function(cat) {
       percent_val <- summary_stats$percentage[summary_stats$category == cat]
-      
+      # Handle cases where a category might have 0% and not appear in the count
+      percent_val <- ifelse(length(percent_val) == 0, 0, percent_val)
+
+      # Dynamically adjust column width based on the number of categories
+      col_width <- floor(10 / length(category_order))
+
       column(
-        2,
+        width = col_width,
         style = "border:1px solid #ddd; text-align:center; padding:5px; margin:0 5px;",
-        tags$b(cat),
+        tags$b(str_wrap(cat, width = 15)), # Wrap long text
         tags$p(paste0(percent_val, "%"))
       )
     })
-    
+
     wellPanel(
       h4(title, align = "center"),
       hr(),
       fluidRow(column(1), summary_cols)
     )
   }
-  
+
+  # output$summary_output_ui <- renderUI({
+  #   req(input$variable_selector == "Risk Attitude")
+  #
+  #   if (input$compare_mode == "single") {
+  #     stats <- get_summary_stats(filtered_data(1))
+  #     ui <- create_summary_box_ui(stats, title = paste("Summary for", population_names()$pop1))
+  #     fluidRow(column(12, ui))
+  #
+  #   } else if (input$compare_mode == "compare_two") {
+  #     stats1 <- get_summary_stats(filtered_data(1))
+  #     stats2 <- get_summary_stats(filtered_data(2))
+  #
+  #     div(
+  #       create_summary_box_ui(stats1, title = population_names()$pop1),
+  #       create_summary_box_ui(stats2, title = population_names()$pop2)
+  #     )
+  #   }
+  # })
+  #
+
+  # +++ UPDATED: The main controller for showing the summary tables +++
   output$summary_output_ui <- renderUI({
-    req(input$variable_selector == "Risk Attitude")
-    
-    if (input$compare_mode == "single") {
-      stats <- get_summary_stats(filtered_data(1))
-      ui <- create_summary_box_ui(stats, title = paste("Summary for", population_names()$pop1))
+    selected_var_name <- plot_vars[input$variable_selector]
+
+    # Only show the summary UI if the selected metric is in our definitions
+    req(selected_var_name %in% names(metric_definitions))
+
+    if (input$compare_mode == "single" || input$compare_mode == "compare_me") {
+      stats <- get_generic_summary_stats(filtered_data(1), selected_var_name)
+      title <- paste("Summary for", population_names()$pop1)
+      ui <- create_summary_box_ui(stats, title = title)
       fluidRow(column(12, ui))
-      
+
     } else if (input$compare_mode == "compare_two") {
-      stats1 <- get_summary_stats(filtered_data(1))
-      stats2 <- get_summary_stats(filtered_data(2))
-      
+      stats1 <- get_generic_summary_stats(filtered_data(1), selected_var_name)
+      stats2 <- get_generic_summary_stats(filtered_data(2), selected_var_name)
+
       div(
         create_summary_box_ui(stats1, title = population_names()$pop1),
         create_summary_box_ui(stats2, title = population_names()$pop2)
       )
     }
   })
+# =================================================================
+# ==== Main Plotting Logic ========================================
+# =================================================================
   
-  # =================================================================
-  # ==== Main Plotting Logic ========================================
-  # =================================================================
-  
-  output$main_plot <- renderPlot({
-    pop1_name <- population_names()$pop1
-    pop2_name <- population_names()$pop2
+output$main_plot <- renderPlot({
+  pop1_name <- population_names()$pop1
+  pop2_name <- population_names()$pop2
+  selected_var_name <- plot_vars[input$variable_selector]
     
-    if (input$variable_selector == "Review Process") {
-      if (input$compare_mode == "single" || input$compare_mode == "compare_me") {
+  # +++ NEW: Create a data frame for the background rectangles +++
+  rect_data <- NULL
+  if (selected_var_name %in% names(metric_definitions)) {
+    defs <- metric_definitions[[selected_var_name]]
+    # Define some alternating colors for the shading
+    rect_colors <- c("#f0f0f0", "#e0e0e0", "#f0f0f0", "#e0e0e0", "#f0f0f0")
+      
+    rect_data <- tibble(
+      xmin = defs$breaks[-length(defs$breaks)] + 0.5,
+      xmax = defs$breaks[-1] + 0.5,
+      label = defs$labels,
+      color = rect_colors[1:length(defs$labels)]
+    )
+  }
+    
+  # Helper function to add the shading and labels to a plot
+  add_category_shading <- function(p, rect_df) {
+    if (is.null(rect_df)) return(p)
+    p +
+      geom_rect(
+        data = rect_df,
+        aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf),
+        fill = rect_df$color,
+        inherit.aes = FALSE,
+        alpha = 0.5
+      ) +
+      geom_text(
+        data = rect_df,
+        aes(x = (xmin + xmax) / 2, y = Inf, label = str_wrap(label, 15)),
+        vjust = 1.2,
+        fontface = "bold",
+        color = "gray40",
+        size = 4,
+        inherit.aes = FALSE
+      )
+  }
+
+  if (input$variable_selector == "Review Process") {
+    # ... (this part of the code remains unchanged)
+    if (input$compare_mode == "single" || input$compare_mode == "compare_me") {
         plot_data <- filtered_data(1) %>% count(review_type) %>% arrange(desc(review_type)) %>%
           mutate(percentage = n / sum(n), ypos = cumsum(percentage) - 0.5 * percentage, label_text = scales::percent(percentage, accuracy = 1))
         if(nrow(plot_data) == 0) return(ggplot() + annotate("text", 0.5, 0.5, label="No data for selected filters.", size=6) + theme_void())
@@ -486,97 +635,107 @@ server <- function(input, output, session) {
           labs(title = "Comparison of Review Processes", x = "Review Type", y = "Percentage of Respondents", fill = "Population") +
           theme_minimal(base_size = 14) + theme(legend.position="bottom", plot.title=element_text(hjust=0.5, face="bold"))
       }
+  } else {
+    all_scores_template <- tibble(value = as.double(0:10))
+    if (input$compare_mode == "compare_two") {
+      process_plot_data <- function(df, pop_name, var) {
+        df_filtered <- df %>% filter(!is.na(.data[[var]]))
+        total_n <- n_distinct(df_filtered$clientid)
+        if (total_n == 0) {
+          return(all_scores_template %>% mutate(percentage = 0, population = pop_name))
+        }
+        df_filtered %>%
+          count(.data[[var]], name = "n") %>%
+          rename(value = !!sym(var)) %>%
+          right_join(all_scores_template, by = "value") %>%
+          mutate(n = replace_na(n, 0), percentage = n / total_n, population = pop_name)
+      }
+      combined_data <- bind_rows(process_plot_data(filtered_data(1), pop1_name, selected_var_name),
+                                 process_plot_data(filtered_data(2), pop2_name, selected_var_name))
+      
+      if(nrow(combined_data) > 0) {
+        combined_data <- combined_data %>%
+          mutate(population = factor(population, levels = c(pop1_name, pop2_name)))
+      }
+      
+      if(nrow(combined_data)==0) return(ggplot()+annotate("text",x=0.5,y=0.5,label="No data.",size=6)+theme_void())
+        
+      p <- ggplot(combined_data, aes(x=value, y=percentage, color=population)) +
+        geom_line(size=1.2) + geom_point(size=4) +
+        scale_x_continuous(limits=c(-0.3,10.5), breaks=seq(0,10,2), expand = c(0,0)) +
+        scale_y_continuous(labels=scales::percent, expand = expansion(mult = c(0.03, .15))) +
+        labs(title=paste("Comparison of", input$variable_selector), x="Score (0-10)", y="Percentage of Respondents", color="Population") +
+        theme_minimal(base_size=15) +
+        theme(plot.title=element_text(hjust=0.5, face="bold"), legend.position="bottom", panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())
+        
+      # Apply the shading
+      add_category_shading(p, rect_data)
+        
+    } else if (input$compare_mode == "compare_me") {
+      # ... (compare_me and single modes also get updated) ...
+      req(input$variable_selector != "Decision Ranking")
+      peers_data <- filtered_data(1)
+      user_data <- selected_user_data()
+      user_value <- user_data[[selected_var_name]]
+      peers_filtered <- peers_data %>% filter(!is.na(.data[[selected_var_name]]))
+      total_n_peers <- n_distinct(peers_filtered$clientid)
+      peers_plot_data <- if (total_n_peers == 0) {
+        all_scores_template %>% mutate(percentage = 0)
+      } else {
+        peers_filtered %>%
+          count(.data[[selected_var_name]], name = "count") %>% rename(value = 1) %>%
+          right_join(all_scores_template, by = "value") %>%
+          mutate(count = replace_na(count, 0), percentage = count / total_n_peers)
+      }
+      if (nrow(peers_plot_data) == 0) return(ggplot() + annotate("text", 0.5, 0.5, label="No peer data.", size=6) + theme_void())
+        
+      p <- ggplot(peers_plot_data, aes(x = value, y = percentage)) +
+        geom_line(color = "#006699", size = 1.2) + geom_point(color = "#006699", size = 4) +
+        scale_x_continuous(limits = c(-0.5, 10.5), breaks = seq(0, 10, 2)) +
+        scale_y_continuous(labels = scales::percent, expand = expansion(mult = c(0.03, .15))) +
+        labs(title = paste("Your Response vs. Peer Distribution for", input$variable_selector), x = "Score (0-10)", y = "Percentage of Respondents") +
+        theme_minimal(base_size = 15) + theme(plot.title = element_text(hjust = 0.5, face = "bold"), panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())
+        
+      p <- add_category_shading(p, rect_data) # Apply shading
+        
+      if (length(user_value) > 0 && !is.na(user_value)) {
+        band_width <- 0.5
+        p <- p +
+          geom_rect(aes(xmin = user_value - band_width, xmax = user_value + band_width, ymin = 0, ymax = Inf),
+                    fill = "#006699", alpha = 0.05, inherit.aes = FALSE) +
+          geom_text(aes(x = user_value, y = (max(peers_plot_data$percentage, 0.1) * 0.5)),
+                    label = "My Response", color = "#006699", fontface = "bold", size = 6.5, angle = 90, inherit.aes = FALSE)
+      }
+      p
     } else {
-      selected_var_name <- plot_vars[input$variable_selector]
-      all_scores_template <- tibble(value = 0:10)
-      if (input$compare_mode == "compare_two") {
-        process_plot_data <- function(df, pop_name, var) {
-          df_filtered <- df %>% filter(!is.na(.data[[var]]))
-          total_n <- n_distinct(df_filtered$clientid)
-          if (total_n == 0) {
-            return(all_scores_template %>% mutate(percentage = 0, population = pop_name))
-          }
-          df_filtered %>%
-            count(.data[[var]], name = "n") %>%
-            rename(value = 1) %>%
-            right_join(all_scores_template, by = "value") %>%
-            mutate(n = replace_na(n, 0), percentage = n / total_n, population = pop_name)
-        }
-        combined_data <- bind_rows(process_plot_data(filtered_data(1), pop1_name, selected_var_name),
-                                   process_plot_data(filtered_data(2), pop2_name, selected_var_name))
-        
-        if(nrow(combined_data) > 0) {
-          combined_data <- combined_data %>%
-            mutate(population = factor(population, levels = c(pop1_name, pop2_name)))
-        }
-        
-        if(nrow(combined_data)==0) return(ggplot()+annotate("text",x=0.5,y=0.5,label="No data.",size=6)+theme_void())
-        ggplot(combined_data, aes(x=value, y=percentage, color=population)) +
-          geom_line(size=1.2) + geom_point(size=4) +
-          scale_x_continuous(limits=c(-0.3,10.5), breaks=seq(0,10,2), expand = c(0,0)) +
-          scale_y_continuous(labels=scales::percent, expand = expansion(mult = c(0.03, .15))) +
-          labs(title=paste("Comparison of", input$variable_selector), x="Score (0-10)", y="Percentage of Respondents", color="Population") +
-          theme_minimal(base_size=15) +
-          theme(plot.title=element_text(hjust=0.5, face="bold"), legend.position="bottom")
-      } else if (input$compare_mode == "compare_me") {
-        req(input$variable_selector != "Decision Ranking")
-        peers_data <- filtered_data(1)
-        user_data <- selected_user_data()
-        user_value <- user_data[[selected_var_name]]
-        peers_filtered <- peers_data %>% filter(!is.na(.data[[selected_var_name]]))
-        total_n_peers <- n_distinct(peers_filtered$clientid)
-        peers_plot_data <- if (total_n_peers == 0) {
+      data <- filtered_data(1)
+      if (input$variable_selector == "Decision Ranking") {
+        create_decision_ranking_plot(data, difficulty_colors)
+      } else {
+        if(nrow(data)==0 || all(is.na(data[[selected_var_name]]))) return(ggplot()+annotate("text",x=0.5,y=0.5,label="No data.",size=6)+theme_void())
+        data_filtered <- data %>% filter(!is.na(.data[[selected_var_name]]))
+        total_n <- n_distinct(data_filtered$clientid)
+        plot_data <- if(total_n == 0) {
           all_scores_template %>% mutate(percentage = 0)
         } else {
-          peers_filtered %>%
-            count(.data[[selected_var_name]], name = "count") %>% rename(value = 1) %>%
+          data_filtered %>%
+            count(.data[[selected_var_name]], name="count") %>% rename(value=1) %>%
             right_join(all_scores_template, by = "value") %>%
-            mutate(count = replace_na(count, 0), percentage = count / total_n_peers)
+            mutate(count = replace_na(count, 0), percentage = count / total_n)
         }
-        if (nrow(peers_plot_data) == 0) return(ggplot() + annotate("text", 0.5, 0.5, label="No peer data.", size=6) + theme_void())
-        p <- ggplot(peers_plot_data, aes(x = value, y = percentage)) +
-          geom_line(color = "#006699", size = 1.2) + geom_point(color = "#006699", size = 4) +
-          scale_x_continuous(limits = c(-0.5, 10.5), breaks = seq(0, 10, 2)) +
-          scale_y_continuous(labels = scales::percent, expand = expansion(mult = c(0.03, .15))) +
-          labs(title = paste("Your Response vs. Peer Distribution for", input$variable_selector), x = "Score (0-10)", y = "Percentage of Respondents") +
-          theme_minimal(base_size = 15) + theme(plot.title = element_text(hjust = 0.5, face = "bold"))
-        if (length(user_value) > 0 && !is.na(user_value)) {
-          band_width <- 0.5
-          p <- p +
-            geom_rect(aes(xmin = user_value - band_width, xmax = user_value + band_width, ymin = 0, ymax = Inf),
-                      fill = "#006699", alpha = 0.05) +
-            geom_text(aes(x = user_value, y = (max(peers_plot_data$percentage, 0.1) * 0.5)),
-                      label = "My Response", color = "#006699", fontface = "bold", size = 6.5, angle = 90)
-        }
-        p
-      } else {
-        data <- filtered_data(1)
-        if (input$variable_selector == "Decision Ranking") {
           
-          create_decision_ranking_plot(data, difficulty_colors)
+        p <- ggplot(plot_data, aes(x=value, y=percentage)) +
+          geom_line(color="#006699",size=1.2) + geom_point(color="#006699",size=4) +
+          scale_x_continuous(limits=c(-0.3,10.5), breaks=seq(0,10,2), expand = c(0,0)) +
+          scale_y_continuous(labels=scales::percent, expand = expansion(mult = c(0.03, 0.15))) +
+          labs(title=paste("Distribution of",input$variable_selector), x="Score (0-10)", y="Percentage of Respondents") +
+          theme_minimal(base_size=15) + theme(plot.title=element_text(hjust=0.5,face="bold"), panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank())
           
-        } else {
-          if(nrow(data)==0 || all(is.na(data[[selected_var_name]]))) return(ggplot()+annotate("text",x=0.5,y=0.5,label="No data.",size=6)+theme_void())
-          data_filtered <- data %>% filter(!is.na(.data[[selected_var_name]]))
-          total_n <- n_distinct(data_filtered$clientid)
-          plot_data <- if(total_n == 0) {
-            all_scores_template %>% mutate(percentage = 0)
-          } else {
-            data_filtered %>%
-              count(.data[[selected_var_name]], name="count") %>% rename(value=1) %>%
-              right_join(all_scores_template, by = "value") %>%
-              mutate(count = replace_na(count, 0), percentage = count / total_n)
-          }
-          ggplot(plot_data, aes(x=value, y=percentage)) +
-            geom_line(color="#006699",size=1.2) + geom_point(color="#006699",size=4) +
-            scale_x_continuous(limits=c(-0.3,10.5), breaks=seq(0,10,2), expand = c(0,0)) +
-            scale_y_continuous(labels=scales::percent, expand = expansion(mult = c(0.03, 0.15))) +
-            labs(title=paste("Distribution of",input$variable_selector), x="Score (0-10)", y="Percentage of Respondents") +
-            theme_minimal(base_size=15) + theme(plot.title=element_text(hjust=0.5,face="bold"))
-        }
+        add_category_shading(p, rect_data) # Apply shading
       }
     }
-  })
+  }
+})
 }
 
 # =================================================================
