@@ -750,7 +750,10 @@ server <- function(input, output, session) {
   output$main_plot <- renderPlot({
     pop1_name <- population_names()$pop1
     pop2_name <- population_names()$pop2
-    
+    if (!is.null(pop2_name) && pop1_name == pop2_name) {
+      pop1_name <- paste(pop1_name, "(Pop 1)")
+      pop2_name <- paste(pop2_name, "(Pop 2)")
+    }
     if (input$variable_selector == "Review Process") {
       if (input$compare_mode == "single" || input$compare_mode == "compare_me") {
         plot_data <- filtered_data(1) %>% count(review_type) %>% arrange(desc(review_type)) %>%
